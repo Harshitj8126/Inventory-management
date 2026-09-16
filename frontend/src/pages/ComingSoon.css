@@ -1,0 +1,210 @@
+/* ============================================================
+   ComingSoon.css — Placeholder Page Styles
+   Codlix Technologies · Inventory & Vendor Management System
+   ============================================================ */
+
+.coming-soon-page {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background-color: #f1f5f9;
+}
+
+.coming-soon-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  padding: 56px 48px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.cs-icon-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+/* Ring glow using pseudo-element */
+.cs-icon-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 60%,
+    currentColor 100%
+  );
+  opacity: 0.15;
+}
+
+.cs-icon-ring--blue {
+  background-color: #eff6ff;
+  color: #1e40af;
+}
+
+.cs-icon-ring--teal {
+  background-color: #f0fdfa;
+  color: #0f766e;
+}
+
+.cs-icon-ring--violet {
+  background-color: #f5f3ff;
+  color: #6d28d9;
+}
+
+.cs-icon-ring--orange {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+.cs-icon-ring--rose {
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
+.cs-icon-ring--indigo {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.cs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #92400e;
+  margin-bottom: 16px;
+}
+
+.cs-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #d97706;
+  animation: cs-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes cs-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.cs-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+
+.cs-description {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.cs-features-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  display: block;
+  text-align: left;
+  width: 100%;
+}
+
+.cs-features {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.cs-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.cs-feature-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.cs-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #f1f5f9;
+  margin-bottom: 24px;
+}
+
+.cs-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+
+.cs-back-btn:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.3);
+  transform: translateY(-1px);
+}
+
+.cs-back-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .coming-soon-card {
+    padding: 40px 28px;
+  }
+
+  .cs-title {
+    font-size: 1.3rem;
+  }
+}
