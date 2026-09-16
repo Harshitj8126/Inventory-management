@@ -497,6 +497,9 @@
 .inventory-page .inv-table-scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  /* Subtle scroll indicator on mobile */
+  scroll-snap-type: x none;
 }
 
 .inventory-page .inv-table {
@@ -626,7 +629,8 @@
   flex-direction: row;
   flex-shrink: 0;
   gap: 4px;
-  padding: 5px 9px;
+  padding: 7px 10px; /* Slightly larger for touch targets */
+  min-height: 34px;  /* Minimum touch target height */
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -822,5 +826,44 @@
 @media (max-width: 380px) {
   .inventory-page .inv-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-page {
+    padding: 14px 12px 32px;
+  }
+
+  .inventory-page .inv-page-title {
+    font-size: 1.2rem;
+  }
+
+  /* On very small phones, hide action button labels, keep only icons */
+  .inventory-page .inv-action-btn span {
+    display: none;
+  }
+
+  .inventory-page .inv-action-btn {
+    padding: 7px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+  }
+}
+
+/* Ensure header actions wrap nicely on all small screens */
+@media (max-width: 600px) {
+  .inventory-page .inv-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inventory-page .inv-header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .inventory-page .inv-btn-add-product,
+  .inventory-page .inv-btn-export {
+    flex: 1;
+    justify-content: center;
   }
 }

@@ -136,21 +136,21 @@ const NAV_ITEMS = [
     section: 'Operations',
     items: [
       { path: '/inventory',      label: 'Inventory',       icon: IconBox,         ready: true  },
-      { path: '/vendors',        label: 'Vendors',         icon: IconUsers,       ready: false },
-      { path: '/purchasing',     label: 'Purchasing',      icon: IconShoppingCart, ready: false },
-      { path: '/receiving',      label: 'Receiving',       icon: IconTruck,       ready: false },
+      { path: '/vendors',        label: 'Vendors',         icon: IconUsers,       ready: true  },
+      { path: '/purchasing',     label: 'Purchasing',      icon: IconShoppingCart, ready: true },
+      { path: '/receiving',      label: 'Receiving',       icon: IconTruck,       ready: true  },
     ],
   },
   {
     section: 'Insights',
     items: [
-      { path: '/reports',        label: 'Reports',         icon: IconBarChart,    ready: false },
+      { path: '/reports',        label: 'Reports',         icon: IconBarChart,    ready: true  },
     ],
   },
   {
     section: 'System',
     items: [
-      { path: '/administration', label: 'Administration',  icon: IconSettings,    ready: false },
+      { path: '/administration', label: 'Administration',  icon: IconSettings,    ready: true  },
     ],
   },
 ];
@@ -238,8 +238,8 @@ const MainLayout = () => {
       >
         {/* Brand */}
         <div className="sidebar-brand">
-          <div className="sidebar-logo" aria-hidden="true">
-            <IconWarehouse />
+          <div className="sidebar-logo" aria-hidden="true" style={{ background: '#ffffff', padding: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/logo.jpg" alt="Codlix Logo" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '6px' }} />
           </div>
           <div className="sidebar-brand-text">
             <span className="sidebar-brand-name">Codlix</span>
@@ -327,8 +327,6 @@ const MainLayout = () => {
 
           {/* Breadcrumb */}
           <div className="topbar-breadcrumb" aria-label="Breadcrumb">
-            <span className="topbar-breadcrumb-root">Codlix SaaS</span>
-            <span className="topbar-breadcrumb-sep" aria-hidden="true">/</span>
             <span className="topbar-page-title" aria-current="page">
               {currentTitle}
             </span>

@@ -1,0 +1,111 @@
+/* ============================================================
+   Receiving.css — Inbound Receiving / GRN Page
+   Codlix Technologies · Inventory & Vendor Management System
+   ============================================================ */
+
+.recv-page { padding: 32px 28px 60px; background: #f8fafc; min-height: 100%; }
+
+.recv-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
+}
+.recv-header-text { display: flex; flex-direction: column; gap: 4px; }
+.recv-icon-wrap {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; background: linear-gradient(135deg,#0d9488,#0f766e);
+  border-radius: 12px; margin-bottom: 10px; box-shadow: 0 6px 16px rgba(13,148,136,0.3);
+}
+.recv-icon-wrap svg { color: #fff; width: 22px; height: 22px; }
+.recv-page-title { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2; }
+.recv-page-subtitle { font-size: 0.875rem; color: #64748b; margin-top: 2px; }
+
+.recv-btn-new {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  background: linear-gradient(135deg,#0d9488,#0f766e); border: none; border-radius: 9px;
+  font-size: 0.875rem; font-weight: 600; color: #fff; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13,148,136,0.3); transition: all 0.18s ease; white-space: nowrap;
+}
+.recv-btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,148,136,0.4); }
+
+/* ── Stat Cards ── */
+.recv-stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+.recv-stat-card {
+  background: #fff; border-radius: 14px; padding: 20px 22px;
+  display: flex; align-items: center; gap: 14px; border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04); transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.recv-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -4px rgba(15,23,42,0.08); }
+.recv-stat-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.recv-stat-icon--teal   { background: linear-gradient(135deg,#f0fdfa,#ccfbf1); color: #0d9488; border: 1px solid #99f6e4; }
+.recv-stat-icon--green  { background: linear-gradient(135deg,#f0fdf4,#dcfce7); color: #15803d; border: 1px solid #bbf7d0; }
+.recv-stat-icon--amber  { background: linear-gradient(135deg,#fffbeb,#fef3c7); color: #d97706; border: 1px solid #fde68a; }
+.recv-stat-icon--blue   { background: linear-gradient(135deg,#eff6ff,#dbeafe); color: #1d4ed8; border: 1px solid #bfdbfe; }
+.recv-stat-info { display: flex; flex-direction: column; gap: 2px; }
+.recv-stat-value { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; line-height: 1.1; }
+.recv-stat-label { font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── GRN Cards ── */
+.recv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+
+.recv-card {
+  background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
+  overflow: hidden; box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.recv-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px -4px rgba(15,23,42,0.1); border-color: #cbd5e1; }
+
+.recv-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px;
+}
+.recv-grn-id { font-family: 'Roboto Mono','Courier New',monospace; font-size: 0.875rem; font-weight: 700; color: #0f172a; }
+.recv-po-ref { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+.recv-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+}
+.recv-status--complete { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.recv-status--partial  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.recv-status--pending  { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+.recv-card-body { padding: 0 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+.recv-vendor-name { font-size: 0.9375rem; font-weight: 600; color: #1e293b; }
+
+.recv-progress-wrap { display: flex; flex-direction: column; gap: 6px; }
+.recv-progress-labels { display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; }
+.recv-progress-bar-track {
+  height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;
+}
+.recv-progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.recv-fill--complete { background: linear-gradient(90deg,#10b981,#059669); }
+.recv-fill--partial  { background: linear-gradient(90deg,#f59e0b,#d97706); }
+.recv-fill--pending  { background: #cbd5e1; }
+
+.recv-card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.recv-meta-item { display: flex; flex-direction: column; gap: 1px; }
+.recv-meta-label { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; }
+.recv-meta-value { font-size: 0.8125rem; font-weight: 600; color: #1e293b; }
+
+.recv-card-footer {
+  padding: 12px 20px; background: #f8fafc; border-top: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.recv-notes { font-size: 0.78rem; color: #64748b; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recv-btn-action {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+  background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 7px;
+  font-size: 0.78rem; font-weight: 600; color: #0d9488; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0;
+}
+.recv-btn-action:hover { background: #ccfbf1; border-color: #5eead4; }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) { .recv-stat-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 768px) {
+  .recv-page { padding: 20px 16px 40px; }
+  .recv-page-title { font-size: 1.375rem; }
+  .recv-header { flex-direction: column; align-items: stretch; }
+  .recv-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) { .recv-stat-grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
+@media (max-width: 380px) { .recv-stat-grid { grid-template-columns: 1fr; } }

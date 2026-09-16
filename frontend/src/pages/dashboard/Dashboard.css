@@ -657,14 +657,67 @@
 
 @media (max-width: 520px) {
   .db-kpi-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
   .db-kpi-value {
-    font-size: 1.95rem;
+    font-size: 1.75rem;
   }
 
+  .db-kpi-card {
+    padding: 18px;
+  }
 
+  .db-greeting {
+    padding: 22px 18px;
+  }
 
+  .db-greeting-title {
+    font-size: 1.25rem;
+  }
 
+  .db-greeting-sub {
+    font-size: 0.875rem;
+  }
+
+  .db-activity-item {
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .db-activity-tag {
+    min-width: 72px;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .db-quickactions-list {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .db-qa-item {
+    padding: 13px 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .db-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .db-page {
+    padding: 16px 12px 36px;
+  }
+
+  .db-greeting {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .db-greeting-title {
+    font-size: 1.125rem;
+  }
+}

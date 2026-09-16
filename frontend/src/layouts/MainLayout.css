@@ -8,7 +8,7 @@
 ══════════════════════════════════════════════════════════ */
 :root {
   --sidebar-width: 268px;
-  --topbar-height: 64px;
+  --topbar-height: 60px;
 
   /* Rich High-Contrast Dark Glass Palette */
   --sb-glass-bg: linear-gradient(180deg, #090e21 0%, #0d1733 45%, #101c3d 100%);
@@ -52,11 +52,13 @@
   -webkit-backdrop-filter: blur(8px);
   z-index: 99;
   opacity: 0;
+  pointer-events: none; /* ← don't block touches when invisible */
   transition: opacity 0.25s ease;
 }
 
 .sidebar-overlay.visible {
   opacity: 1;
+  pointer-events: auto; /* ← only capture touches when open */
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -68,6 +70,7 @@
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile browsers */
   background: var(--sb-glass-bg);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
@@ -78,6 +81,9 @@
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  /* iOS safe area for sidebar content */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
 }
 
 /* Floating ambient light inside sidebar header */
@@ -456,18 +462,19 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--topbar-height);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
+  /* iOS safe area support */
+  padding-right: max(32px, env(safe-area-inset-right, 32px));
   z-index: 50;
-  box-shadow:
-    0 4px 20px -2px rgba(15, 23, 42, 0.04),
-    inset 0 -1px 0 rgba(226, 232, 240, 0.6);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -482,8 +489,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;  /* Minimum 44px touch target (Apple HIG) */
+  height: 44px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 10px;
@@ -491,6 +498,7 @@
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  flex-shrink: 0;
 }
 
 .topbar-hamburger:hover {
@@ -609,9 +617,12 @@
   margin-left: var(--sidebar-width);
   margin-top: var(--topbar-height);
   min-height: calc(100vh - var(--topbar-height));
+  min-height: calc(100dvh - var(--topbar-height)); /* Mobile dynamic viewport */
   flex: 1;
   transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: transparent;
+  /* Ensure content is visible above iOS bottom bar */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 
@@ -630,10 +641,13 @@
 
   .sidebar-overlay {
     display: block;
+    pointer-events: none; /* still none until .visible is added */
   }
 
   .topbar {
     left: 0;
+    /* iOS safe area for left side when in landscape */
+    padding-left: max(16px, env(safe-area-inset-left, 16px));
   }
 
   .topbar-hamburger {
@@ -649,11 +663,23 @@
    RESPONSIVE — MOBILE (≤ 480px)
 ══════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
+  :root {
+    --topbar-height: 56px;
+  }
+
   .topbar {
-    padding: 0 16px;
+    padding: 0 12px;
+    padding-left: max(12px, env(safe-area-inset-left, 12px));
+    padding-right: max(12px, env(safe-area-inset-right, 12px));
   }
 
   .topbar-system-status {
+    display: none;
+  }
+
+  /* On very small phones, hide breadcrumb root to save space */
+  .topbar-breadcrumb-root,
+  .topbar-breadcrumb-sep {
     display: none;
   }
 
@@ -665,5 +691,20 @@
   .topbar-username {
     display: none;
   }
+
+  /* Sidebar footer safe area for iOS home indicator */
+  .sidebar-footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
+/* Landscape mobile fix */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --topbar-height: 48px;
+  }
+
+  .sidebar {
+    width: min(var(--sidebar-width), 75vw);
+  }
+}

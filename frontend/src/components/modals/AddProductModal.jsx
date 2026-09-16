@@ -1,9 +1,10 @@
 /* ============================================================
-   AddProductModal.jsx — Add New Inventory Item
+   AddProductModal.jsx — Add New Inventory Item with Dynamic Categories
    Codlix Technologies · Inventory & Vendor Management System
    ============================================================ */
 
 import { useState, useCallback } from 'react';
+import { getCategories, addCategory } from '../../services/categoryService';
 import Modal from './Modal';
 
 const IconPlus = () => (
@@ -14,17 +15,6 @@ const IconPlus = () => (
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
-
-const CATEGORIES = [
-  'Electronics',
-  'Accessories',
-  'Office Supplies',
-  'Furniture',
-  'Stationery',
-  'Networking',
-  'Storage',
-  'Other',
-];
 
 const WAREHOUSES = [
   'Delhi Warehouse',
@@ -43,17 +33,13 @@ const suggestSku = (name) => {
 
 /**
  * AddProductModal
- *
- * Full form to create a new inventory record.
- * Props:
- *   existingSkus {string[]}  — list of existing SKUs for uniqueness check
- *   onClose      {function}
- *   onConfirm    {function}  — (formData) => void
  */
 const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
+  const [categoriesList, setCategoriesList] = useState(getCategories());
   const [productName, setProductName] = useState('');
   const [sku,         setSku]         = useState('');
-  const [category,    setCategory]    = useState('Electronics');
+  const [category,    setCategory]    = useState(categoriesList[0] || 'Electronics');
+  const [customCat,   setCustomCat]   = useState('');
   const [warehouse,   setWarehouse]   = useState('Delhi Warehouse');
   const [available,   setAvailable]   = useState('0');
   const [reserved,    setReserved]    = useState('0');
@@ -62,7 +48,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
   const [errors,      setErrors]      = useState({});
   const [skuTouched,  setSkuTouched]  = useState(false);
 
-  /* ── Auto-fill SKU when product name changes (if user hasn't touched it) ── */
+  /* ── Auto-fill SKU ── */
   const handleProductNameChange = (e) => {
     const val = e.target.value;
     setProductName(val);
@@ -87,7 +73,6 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
   const allQtyValid = !isNaN(avail) && avail >= 0
                    && !isNaN(res)   && res   >= 0
                    && !isNaN(dmg)   && dmg   >= 0;
-  const newTotal = allQtyValid ? avail + res + dmg : '—';
 
   /* ── Validation ── */
   const validate = useCallback(() => {
@@ -97,12 +82,15 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
     else if (existingSkus.map((s) => s.toLowerCase()).includes(sku.trim().toLowerCase())) {
       errs.sku = `SKU "${sku}" already exists.`;
     }
+    if (category === 'ADD_CUSTOM' && !customCat.trim()) {
+      errs.customCat = 'Custom category name is required.';
+    }
     if (isNaN(avail) || avail < 0)  errs.available  = 'Must be 0 or more.';
     if (isNaN(res)   || res   < 0)  errs.reserved   = 'Must be 0 or more.';
     if (isNaN(dmg)   || dmg   < 0)  errs.damaged    = 'Must be 0 or more.';
     if (isNaN(rl)    || rl    < 0)  errs.reorderLvl = 'Must be 0 or more.';
     return errs;
-  }, [productName, sku, avail, res, dmg, rl, existingSkus]);
+  }, [productName, sku, category, customCat, avail, res, dmg, rl, existingSkus]);
 
   /* ── Submit ── */
   const handleSubmit = (e) => {
@@ -112,10 +100,17 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
       setErrors(errs);
       return;
     }
+
+    let finalCategory = category;
+    if (category === 'ADD_CUSTOM' && customCat.trim()) {
+      finalCategory = customCat.trim();
+      addCategory(finalCategory);
+    }
+
     onConfirm({
       productName:       productName.trim(),
       sku:               sku.trim().toUpperCase(),
-      category,
+      category:          finalCategory,
       warehouse,
       availableQuantity: avail,
       reservedQuantity:  res,
@@ -128,6 +123,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
   const isFormValid =
     productName.trim() !== '' &&
     sku.trim() !== '' &&
+    (category !== 'ADD_CUSTOM' || customCat.trim() !== '') &&
     allQtyValid &&
     !isNaN(rl) && rl >= 0;
 
@@ -203,7 +199,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
 
           <div className="mf-group">
             <label htmlFor="ap-category" className="mf-label">
-              Category <span className="mf-required" aria-hidden="true">*</span>
+              Category / Type <span className="mf-required" aria-hidden="true">*</span>
             </label>
             <select
               id="ap-category"
@@ -211,12 +207,32 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              {CATEGORIES.map((c) => (
+              {categoriesList.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
+              <option value="ADD_CUSTOM">+ Add Custom Category...</option>
             </select>
           </div>
         </div>
+
+        {category === 'ADD_CUSTOM' && (
+          <div className="mf-group">
+            <label htmlFor="ap-custom-cat" className="mf-label">
+              Type Custom Category Name <span className="mf-required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="ap-custom-cat"
+              type="text"
+              className={`mf-input${errors.customCat ? ' mf-error' : ''}`}
+              value={customCat}
+              onChange={(e) => setCustomCat(e.target.value)}
+              placeholder="e.g. Automotive, Medical Equipment..."
+            />
+            {errors.customCat && (
+              <span className="mf-error-msg" role="alert">⚠ {errors.customCat}</span>
+            )}
+          </div>
+        )}
 
         {/* ── Warehouse | Reorder Level ── */}
         <div className="mf-row">
@@ -248,84 +264,60 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
               className={`mf-input${errors.reorderLvl ? ' mf-error' : ''}`}
               value={reorderLvl}
               onChange={(e) => { setReorderLvl(e.target.value); setErrors((p) => ({ ...p, reorderLvl: '' })); }}
-              placeholder="e.g. 10"
             />
             {errors.reorderLvl && (
               <span className="mf-error-msg" role="alert">⚠ {errors.reorderLvl}</span>
             )}
-            <span className="mf-hint">Alert when available stock falls below this</span>
           </div>
         </div>
 
-        {/* ── Quantity Fields ── */}
+        {/* ── Initial Quantities ── */}
         <div className="mf-row">
           <div className="mf-group">
-            <label htmlFor="ap-available" className="mf-label">
-              Available Qty <span className="mf-required" aria-hidden="true">*</span>
-            </label>
+            <label htmlFor="ap-avail" className="mf-label">Available Qty</label>
             <input
-              id="ap-available"
+              id="ap-avail"
               type="number"
               min="0"
               step="1"
               className={`mf-input${errors.available ? ' mf-error' : ''}`}
               value={available}
               onChange={(e) => { setAvailable(e.target.value); setErrors((p) => ({ ...p, available: '' })); }}
-              placeholder="0"
             />
-            {errors.available && (
-              <span className="mf-error-msg" role="alert">⚠ {errors.available}</span>
-            )}
           </div>
 
           <div className="mf-group">
-            <label htmlFor="ap-reserved" className="mf-label">
-              Reserved Qty <span className="mf-required" aria-hidden="true">*</span>
-            </label>
+            <label htmlFor="ap-res" className="mf-label">Reserved Qty</label>
             <input
-              id="ap-reserved"
+              id="ap-res"
               type="number"
               min="0"
               step="1"
               className={`mf-input${errors.reserved ? ' mf-error' : ''}`}
               value={reserved}
               onChange={(e) => { setReserved(e.target.value); setErrors((p) => ({ ...p, reserved: '' })); }}
-              placeholder="0"
             />
-            {errors.reserved && (
-              <span className="mf-error-msg" role="alert">⚠ {errors.reserved}</span>
-            )}
           </div>
         </div>
 
         <div className="mf-row">
           <div className="mf-group">
-            <label htmlFor="ap-damaged" className="mf-label">
-              Damaged Qty <span className="mf-required" aria-hidden="true">*</span>
-            </label>
+            <label htmlFor="ap-dmg" className="mf-label">Damaged Qty</label>
             <input
-              id="ap-damaged"
+              id="ap-dmg"
               type="number"
               min="0"
               step="1"
               className={`mf-input${errors.damaged ? ' mf-error' : ''}`}
               value={damaged}
               onChange={(e) => { setDamaged(e.target.value); setErrors((p) => ({ ...p, damaged: '' })); }}
-              placeholder="0"
             />
-            {errors.damaged && (
-              <span className="mf-error-msg" role="alert">⚠ {errors.damaged}</span>
-            )}
           </div>
 
-          {/* Auto-computed Total */}
           <div className="mf-group">
-            <span className="mf-label">Total Quantity (auto)</span>
-            <div className="adjust-total-preview" aria-live="polite" aria-atomic="true">
-              <span className="adjust-total-label">Total =</span>
-              <span className="adjust-total-value">
-                {newTotal}{typeof newTotal === 'number' ? ' units' : ''}
-              </span>
+            <label className="mf-label">Calculated Total</label>
+            <div className="mf-readonly" aria-live="polite">
+              {avail + res + dmg} units
             </div>
           </div>
         </div>

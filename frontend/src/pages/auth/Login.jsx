@@ -218,12 +218,8 @@ const Login = () => {
         {/* Left Branding / Hero Side Panel (Desktop Split View) */}
         <div className="login-hero-panel">
           <div className="hero-brand">
-            <div className="hero-logo-box" aria-hidden="true">
-              <svg className="hero-logo-icon" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
+            <div className="hero-logo-box" aria-hidden="true" style={{ background: '#ffffff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo.jpg" alt="Codlix Logo" style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '8px' }} />
             </div>
             <div className="hero-brand-text">
               <span className="hero-brand-name">Codlix Technologies</span>
@@ -274,46 +270,16 @@ const Login = () => {
 
           {/* Header */}
           <header className="login-header">
-            <div className="login-logo-wrapper" aria-hidden="true">
-              <svg className="login-logo-icon" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
+            <div className="login-logo-wrapper" aria-hidden="true" style={{ background: '#ffffff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo.jpg" alt="Codlix Logo" style={{ width: '46px', height: '46px', objectFit: 'contain', borderRadius: '10px' }} />
             </div>
             <h1 className="login-title">Inventory &amp; Vendor Management</h1>
             <p className="login-subtitle">
-              {mode === 'signin'
-                ? 'Sign in to your account to continue'
-                : 'Create a new account to get started'}
+              Sign in to your account to continue
             </p>
           </header>
 
-          {/* Tab Switcher */}
-          <div className="auth-tabs" role="tablist" aria-label="Authentication Options">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'signin'}
-              className={`auth-tab ${mode === 'signin' ? 'active' : ''}`}
-              onClick={() => handleSwitchMode('signin')}
-              disabled={loading}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'signup'}
-              className={`auth-tab ${mode === 'signup' ? 'active' : ''}`}
-              onClick={() => handleSwitchMode('signup')}
-              disabled={loading}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <div className="login-divider" aria-hidden="true" />
+          <div className="login-divider" aria-hidden="true" style={{ marginTop: '12px', marginBottom: '20px' }} />
 
           {/* Top Error Alert Banner */}
           {authError && (
@@ -530,51 +496,18 @@ const Login = () => {
               className="login-btn"
               disabled={loading}
               aria-busy={loading}
-              aria-label={
-                loading
-                  ? mode === 'signup' ? 'Creating account...' : 'Logging in...'
-                  : mode === 'signup' ? 'Create Account' : 'Sign In'
-              }
+              aria-label={loading ? 'Logging in...' : 'Sign In'}
             >
               {loading ? (
                 <>
                   <span className="btn-spinner" aria-hidden="true" />
-                  {mode === 'signup' ? 'Creating Account...' : 'Signing In...'}
+                  Signing In...
                 </>
               ) : (
-                mode === 'signup' ? 'Create Account' : 'Sign In'
+                'Sign In'
               )}
             </button>
           </form>
-
-          {/* Mode Switch Prompt */}
-          <div className="auth-switch-prompt">
-            {mode === 'signin' ? (
-              <p>
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  className="auth-switch-btn"
-                  onClick={() => handleSwitchMode('signup')}
-                  disabled={loading}
-                >
-                  Sign Up
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  className="auth-switch-btn"
-                  onClick={() => handleSwitchMode('signin')}
-                  disabled={loading}
-                >
-                  Sign In
-                </button>
-              </p>
-            )}
-          </div>
 
           {/* Footer */}
           <footer className="login-footer">

@@ -112,6 +112,8 @@ const WAREHOUSE_OPTIONS = [
   { value: 'Mumbai Warehouse',  label: 'Mumbai Warehouse' },
 ];
 
+import { getCategories } from '../../services/categoryService';
+
 const CATEGORY_OPTIONS = [
   { value: 'all',             label: 'All Categories' },
   { value: 'Electronics',     label: 'Electronics' },
@@ -119,6 +121,7 @@ const CATEGORY_OPTIONS = [
   { value: 'Office Supplies', label: 'Office Supplies' },
   { value: 'Furniture',       label: 'Furniture' },
 ];
+
 
 const STATUS_OPTIONS = [
   { value: 'all',          label: 'All Status' },
@@ -166,6 +169,17 @@ const InventoryList = () => {
 
   /* ── Filter state ── */
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+
+  /* ── Dynamic Category Options ── */
+  const categoryOptions = useMemo(() => {
+    const fromItems = inventoryItems.map((i) => i.category).filter(Boolean);
+    const fromStore = getCategories();
+    const unique = Array.from(new Set([...fromStore, ...fromItems]));
+    return [
+      { value: 'all', label: 'All Categories' },
+      ...unique.map((c) => ({ value: c, label: c })),
+    ];
+  }, [inventoryItems]);
 
   /* ── Modal state: { type: null|'view'|'stock-in'|'stock-out'|'transfer'|'adjust', item: null|object } ── */
   const [modal, setModal] = useState({ type: null, item: null });
@@ -542,7 +556,7 @@ const InventoryList = () => {
               onChange={(e) => handleFilterChange('category', e.target.value)}
               aria-label="Filter by category"
             >
-              {CATEGORY_OPTIONS.map((opt) => (
+              {categoryOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>

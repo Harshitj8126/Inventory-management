@@ -5,10 +5,12 @@
 
 .coming-soon-page {
   min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px); /* Mobile dynamic viewport */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
+  padding-bottom: max(40px, env(safe-area-inset-bottom, 40px));
   background-color: #f1f5f9;
 }
 
@@ -201,10 +203,30 @@
 
 @media (max-width: 480px) {
   .coming-soon-card {
-    padding: 40px 28px;
+    padding: 36px 20px;
   }
 
   .cs-title {
     font-size: 1.3rem;
+  }
+
+  .cs-back-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .coming-soon-card {
+    padding: 28px 16px;
+  }
+
+  .cs-title {
+    font-size: 1.15rem;
+  }
+
+  .cs-description {
+    font-size: 0.85rem;
   }
 }
