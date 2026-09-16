@@ -25,6 +25,7 @@ import AdjustModal         from '../../components/modals/AdjustModal';
 import AddProductModal     from '../../components/modals/AddProductModal';
 import DeleteConfirmModal  from '../../components/modals/DeleteConfirmModal';
 
+import '../../components/modals/Modal.css';
 import './Inventory.css';
 
 /* ── SVG Icons ── */
