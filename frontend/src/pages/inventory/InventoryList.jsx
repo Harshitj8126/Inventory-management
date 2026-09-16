@@ -422,7 +422,7 @@ const InventoryList = () => {
 
   /* ── Render ── */
   return (
-    <div className="inv-page">
+    <div className="inventory-page inv-page">
 
       {/* ── Page Header ── */}
       <header className="inv-header">
