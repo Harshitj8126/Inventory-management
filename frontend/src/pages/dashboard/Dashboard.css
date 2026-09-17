@@ -28,48 +28,16 @@
   gap: 24px;
   background: linear-gradient(135deg, rgba(10, 15, 36, 0.92) 0%, rgba(19, 27, 58, 0.88) 45%, rgba(34, 21, 69, 0.9) 100%);
   backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
   border-radius: 24px;
   padding: 36px 44px;
   overflow: hidden;
-  /* Level 4 Elevation Shadow */
   box-shadow: var(--elevation-4);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
 }
 
-.db-greeting:hover {
-  box-shadow:
-    0 22px 56px -8px rgba(15, 23, 42, 0.45),
-    0 38px 84px -15px rgba(99, 102, 241, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-/* Low-opacity floating background glow orbs */
+/* Background glow orbs hidden per design preference */
 .db-greeting-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  pointer-events: none;
-  opacity: 0.55;
-  transition: opacity 0.3s ease;
-}
-
-.db-glow-1 {
-  width: 260px;
-  height: 260px;
-  top: -70px;
-  right: 10%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.65) 0%, rgba(59, 130, 246, 0) 70%);
-}
-
-.db-glow-2 {
-  width: 220px;
-  height: 220px;
-  bottom: -70px;
-  left: 16%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.55) 0%, rgba(236, 72, 153, 0) 70%);
+  display: none;
 }
 
 .db-greeting-content {
@@ -141,32 +109,26 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 13px 24px;
+  padding: 12px 22px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.9) 100%);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 700;
   color: #0f172a;
   text-decoration: none;
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.25),
-    0 12px 28px -4px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 #ffffff;
   backdrop-filter: blur(12px);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
 }
 
 .db-view-inventory-btn:hover {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-2px);
   background: #ffffff;
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.35),
-    0 18px 40px -4px rgba(59, 130, 246, 0.35),
-    inset 0 1px 0 #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 #ffffff;
   color: #1d4ed8;
 }
 
@@ -179,70 +141,40 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   LEVEL 3 ELEVATION — VISION PRO SPATIAL KPI CARDS GRID
+   COMPACT KPI CARDS GRID
 ══════════════════════════════════════════════════════════ */
 .db-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 22px;
+  gap: 14px;
 }
 
 .db-kpi-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 20px;
-  padding: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
-  /* Level 3 Elevation Shadow */
-  box-shadow: var(--elevation-3);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  transition:
-    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.25s ease,
-    border-color 0.25s ease,
-    background-color 0.25s ease;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   overflow: hidden;
 }
 
-/* Soft colored status backlight per KPI card */
 .db-kpi-card::before {
-  content: '';
-  position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  filter: blur(34px);
-  opacity: 0.22;
-  pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  display: none;
 }
-
-.db-kpi-card--blue::before  { background-color: #3b82f6; }
-.db-kpi-card--teal::before  { background-color: #14b8a6; }
-.db-kpi-card--amber::before { background-color: #f59e0b; }
-.db-kpi-card--red::before   { background-color: #ef4444; }
 
 .db-kpi-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow:
-    0 6px 14px rgba(15, 23, 42, 0.03),
-    0 20px 42px -6px rgba(15, 23, 42, 0.09),
-    0 32px 64px -15px rgba(15, 23, 42, 0.05),
-    inset 0 1px 0 #ffffff;
-  border-color: rgba(255, 255, 255, 1);
-}
-
-.db-kpi-card:hover::before {
-  opacity: 0.42;
-  transform: scale(1.18);
+  transform: translateY(-2px);
+  background: #ffffff;
+  box-shadow: 0 6px 18px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  border-color: #cbd5e1;
 }
 
 .db-kpi-card-header {
@@ -251,21 +183,21 @@
   justify-content: space-between;
 }
 
-/* 3D Extruded Glass Icon Badges */
+/* Sleek Compact Icon Badges */
 .db-kpi-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   flex-shrink: 0;
-  box-shadow:
-    0 6px 14px rgba(0, 0, 0, 0.07),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.db-kpi-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .db-kpi-icon--blue  { background: linear-gradient(135deg, rgba(239, 246, 255, 0.9) 0%, rgba(219, 234, 254, 0.9) 100%); color: #1d4ed8; }
@@ -273,15 +205,14 @@
 .db-kpi-icon--amber { background: linear-gradient(135deg, rgba(255, 251, 235, 0.9) 0%, rgba(254, 243, 199, 0.9) 100%); color: #b45309; }
 .db-kpi-icon--red   { background: linear-gradient(135deg, rgba(254, 242, 242, 0.9) 0%, rgba(254, 226, 226, 0.9) 100%); color: #b91c1c; }
 
-/* Level 1 Elevation Micro Badges */
+/* Micro Badges */
 .db-kpi-badge {
-  font-size: 0.6875rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 3.5px 9px;
-  border-radius: 7px;
+  padding: 2.5px 7px;
+  border-radius: 5px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  box-shadow: var(--elevation-1);
 }
 
 .db-kpi-badge--blue  { background: rgba(239, 246, 255, 0.9); color: #1e40af; border: 1px solid #bfdbfe; }
@@ -292,15 +223,15 @@
 .db-kpi-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .db-kpi-value {
-  font-size: 2.25rem;
-  font-weight: 800;
+  font-size: 1.45rem;
+  font-weight: 700;
   color: #0f172a;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   font-feature-settings: "tnum";
 }
 
@@ -308,8 +239,8 @@
 .db-kpi-value--red   { color: #dc2626; }
 
 .db-kpi-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: #64748b;
   letter-spacing: -0.01em;
 }
@@ -317,25 +248,31 @@
 .db-kpi-trend {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 4.5px 11px;
-  border-radius: 9px;
+  padding: 3px 8px;
+  border-radius: 6px;
   align-self: flex-start;
-  box-shadow: var(--elevation-1);
 }
 
 .trend-dot {
-  width: 6.5px;
-  height: 6.5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
-.trend-dot--blue  { background-color: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.7); }
-.trend-dot--teal  { background-color: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.7); }
-.trend-dot--amber { background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.7); }
-.trend-dot--red   { background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.7); }
+.trend-dot--blue  { background-color: #3b82f6; }
+.trend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.trend-dot--blue  { background-color: #3b82f6; }
+.trend-dot--teal  { background-color: #10b981; }
+.trend-dot--amber { background-color: #f59e0b; }
+.trend-dot--red   { background-color: #ef4444; }
 
 .db-kpi-trend--neutral { background-color: rgba(241, 245, 249, 0.8); color: #64748b; border: 1px solid #e2e8f0; }
 .db-kpi-trend--warn    { background-color: rgba(255, 251, 235, 0.8); color: #b45309; border: 1px solid #fde68a; }

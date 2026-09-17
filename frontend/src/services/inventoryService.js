@@ -149,13 +149,23 @@ export const getStockStatus = (item) => {
   return 'In Stock';
 };
 
-/* ── API-ready function (Axios will replace mock data here) ──
-   Usage:  const data = await getInventory();
+import { fetchProducts } from './productsApi';
+
+/* ── Live API & Mock Integration ──
+   Fetches live items from https://inventory-vendor-management-system.onrender.com/api/v1/products/
 ──────────────────────────────────────────────────────────── */
 export const getInventory = async () => {
-  // TODO: Replace with Axios call when backend is ready:
-  // const response = await axios.get('/api/v1/inventory/');
-  // return response.data;
+  try {
+    const apiProducts = await fetchProducts();
+    if (Array.isArray(apiProducts) && apiProducts.length > 0) {
+      // Merge live API products with baseline inventory items to present full product suite
+      const apiSkus = new Set(apiProducts.map((p) => p.sku));
+      const filteredMock = inventoryData.filter((m) => !apiSkus.has(m.sku));
+      return [...apiProducts, ...filteredMock];
+    }
+  } catch (error) {
+    console.warn('API fetch failed, falling back to local inventory data:', error);
+  }
   return Promise.resolve(inventoryData);
 };
 

@@ -445,10 +445,12 @@ const InventoryList = () => {
             <div className="inv-header-icon-wrap" aria-hidden="true">
               <IconBox />
             </div>
-            <h1 className="inv-page-title">Inventory Management</h1>
-            <p className="inv-page-subtitle">
-              Manage and monitor stock across warehouses.
-            </p>
+            <div className="inv-header-titles">
+              <h1 className="inv-page-title">Inventory Management</h1>
+              <p className="inv-page-subtitle">
+                Manage and monitor stock across warehouses.
+              </p>
+            </div>
           </div>
 
           <div className="inv-header-actions">
