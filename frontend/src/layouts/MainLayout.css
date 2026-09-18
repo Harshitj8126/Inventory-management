@@ -86,6 +86,32 @@
   padding-left: env(safe-area-inset-left, 0px);
 }
 
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+@media (min-width: 1025px) {
+  .app-shell.sidebar-closed .topbar {
+    left: 0 !important;
+  }
+
+  .app-shell.sidebar-closed .main-content {
+    margin-left: 0 !important;
+  }
+
+  .app-shell.sidebar-open .topbar {
+    left: var(--sidebar-width);
+  }
+
+  .app-shell.sidebar-open .main-content {
+    margin-left: var(--sidebar-width);
+  }
+}
+
 .sidebar::before {
   display: none;
 }
@@ -467,7 +493,7 @@
 }
 
 .topbar-hamburger {
-  display: none;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   width: 44px;  /* Minimum 44px touch target (Apple HIG) */

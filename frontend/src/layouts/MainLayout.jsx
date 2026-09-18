@@ -190,17 +190,19 @@ const MainLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 1024);
 
-  /* Close sidebar on route change (mobile) */
+  /* Close sidebar on route change only on mobile/tablet */
   useEffect(() => {
-    setSidebarOpen(false);
+    if (window.innerWidth <= 1024) {
+      setSidebarOpen(false);
+    }
   }, [location.pathname]);
 
   /* Close sidebar on Escape key */
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') setSidebarOpen(false);
+      if (e.key === 'Escape' && window.innerWidth <= 1024) setSidebarOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -219,7 +221,7 @@ const MainLayout = () => {
   const initials = getInitials(userName);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
 
       {/* ── Mobile Overlay ── */}
       <div
@@ -232,7 +234,7 @@ const MainLayout = () => {
           SIDEBAR
       ══════════════════════════════════ */}
       <aside
-        className={`sidebar ${sidebarOpen ? 'open' : ''}`}
+        className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}
         id="main-sidebar"
         aria-label="Main sidebar navigation"
       >
