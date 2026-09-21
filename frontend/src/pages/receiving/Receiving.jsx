@@ -6,6 +6,7 @@
 import { useState, useMemo } from 'react';
 import { receivingData as initialReceiving } from '../../services/mockData';
 import Modal from '../../components/modals/Modal';
+import KpiCard from '../../components/common/KpiCard';
 import './Receiving.css';
 
 const IconTruck = () => (
@@ -157,20 +158,10 @@ const Receiving = () => {
 
       {/* ── Stats ── */}
       <div className="recv-stat-grid" role="list" aria-label="Receiving statistics">
-        {[
-          { icon: <IconTruck />,   cls: 'recv-stat-icon--teal',  value: stats.total,    label: 'Total GRNs' },
-          { icon: <IconCheck />,   cls: 'recv-stat-icon--green', value: stats.complete, label: 'Complete' },
-          { icon: <IconPackage />, cls: 'recv-stat-icon--amber', value: stats.partial,  label: 'Partial' },
-          { icon: <IconClock />,   cls: 'recv-stat-icon--blue',  value: stats.pending,  label: 'Pending' },
-        ].map((s, i) => (
-          <div key={i} className="recv-stat-card" role="listitem">
-            <div className={`recv-stat-icon ${s.cls}`}>{s.icon}</div>
-            <div className="recv-stat-info">
-              <span className="recv-stat-value">{s.value}</span>
-              <span className="recv-stat-label">{s.label}</span>
-            </div>
-          </div>
-        ))}
+        <KpiCard icon={<IconTruck />} value={stats.total} label="Total GRNs" />
+        <KpiCard icon={<IconCheck />} value={stats.complete} label="Complete" />
+        <KpiCard icon={<IconPackage />} value={stats.partial} label="Partial" />
+        <KpiCard icon={<IconClock />} value={stats.pending} label="Pending" />
       </div>
 
       {/* ── GRN Cards ── */}

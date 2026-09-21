@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { vendorsData as initialVendors } from '../../services/mockData';
 import { getCategories, addCategory } from '../../services/categoryService';
 import Modal from '../../components/modals/Modal';
+import KpiCard from '../../components/common/KpiCard';
 import './Vendors.css';
 
 /* ── Icons ── */
@@ -181,20 +182,10 @@ const Vendors = () => {
 
       {/* ── Stat Cards ── */}
       <div className="vnd-summary-grid" role="list" aria-label="Vendor statistics">
-        {[
-          { icon: <IconUsers />, iconClass: 'vnd-stat-icon--violet', value: stats.total,    label: 'Total Vendors' },
-          { icon: <IconBuilding />, iconClass: 'vnd-stat-icon--green', value: stats.active,  label: 'Active Vendors' },
-          { icon: <IconStar />, iconClass: 'vnd-stat-icon--amber', value: `₹${(stats.totalSpend/100000).toFixed(1)}L`, label: 'Total Spend' },
-          { icon: <IconStar />, iconClass: 'vnd-stat-icon--blue',  value: stats.avgRating, label: 'Avg. Rating' },
-        ].map((s, i) => (
-          <div key={i} className="vnd-stat-card" role="listitem">
-            <div className={`vnd-stat-icon ${s.iconClass}`}>{s.icon}</div>
-            <div className="vnd-stat-info">
-              <span className="vnd-stat-value">{s.value}</span>
-              <span className="vnd-stat-label">{s.label}</span>
-            </div>
-          </div>
-        ))}
+        <KpiCard icon={<IconUsers />} value={stats.total} label="Total Vendors" />
+        <KpiCard icon={<IconBuilding />} value={stats.active} label="Active Vendors" />
+        <KpiCard icon={<IconStar />} value={`₹${(stats.totalSpend/100000).toFixed(1)}L`} label="Total Spend" />
+        <KpiCard icon={<IconStar />} value={stats.avgRating} label="Avg. Rating" />
       </div>
 
       {/* ── Filter Bar ── */}

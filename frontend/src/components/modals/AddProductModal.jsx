@@ -16,12 +16,6 @@ const IconPlus = () => (
   </svg>
 );
 
-const WAREHOUSES = [
-  'Delhi Warehouse',
-  'Noida Warehouse',
-  'Mumbai Warehouse',
-];
-
 /* ── Auto-suggest SKU from product name ── */
 const suggestSku = (name) => {
   if (!name.trim()) return '';
@@ -40,11 +34,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
   const [sku,         setSku]         = useState('');
   const [category,    setCategory]    = useState(categoriesList[0] || 'Electronics');
   const [customCat,   setCustomCat]   = useState('');
-  const [warehouse,   setWarehouse]   = useState('Delhi Warehouse');
   const [available,   setAvailable]   = useState('0');
-  const [reserved,    setReserved]    = useState('0');
-  const [damaged,     setDamaged]     = useState('0');
-  const [reorderLvl,  setReorderLvl]  = useState('10');
   const [errors,      setErrors]      = useState({});
   const [skuTouched,  setSkuTouched]  = useState(false);
 
@@ -64,15 +54,9 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
     setErrors((p) => ({ ...p, sku: '' }));
   };
 
-  /* ── Parse quantities ── */
+  /* ── Parse quantity ── */
   const avail = parseInt(available, 10);
-  const res   = parseInt(reserved,  10);
-  const dmg   = parseInt(damaged,   10);
-  const rl    = parseInt(reorderLvl, 10);
-
-  const allQtyValid = !isNaN(avail) && avail >= 0
-                   && !isNaN(res)   && res   >= 0
-                   && !isNaN(dmg)   && dmg   >= 0;
+  const qtyValid = !isNaN(avail) && avail >= 0;
 
   /* ── Validation ── */
   const validate = useCallback(() => {
@@ -85,12 +69,9 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
     if (category === 'ADD_CUSTOM' && !customCat.trim()) {
       errs.customCat = 'Custom category name is required.';
     }
-    if (isNaN(avail) || avail < 0)  errs.available  = 'Must be 0 or more.';
-    if (isNaN(res)   || res   < 0)  errs.reserved   = 'Must be 0 or more.';
-    if (isNaN(dmg)   || dmg   < 0)  errs.damaged    = 'Must be 0 or more.';
-    if (isNaN(rl)    || rl    < 0)  errs.reorderLvl = 'Must be 0 or more.';
+    if (isNaN(avail) || avail < 0)  errs.available = 'Must be 0 or more.';
     return errs;
-  }, [productName, sku, category, customCat, avail, res, dmg, rl, existingSkus]);
+  }, [productName, sku, category, customCat, avail, existingSkus]);
 
   /* ── Submit ── */
   const handleSubmit = (e) => {
@@ -111,12 +92,11 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
       productName:       productName.trim(),
       sku:               sku.trim().toUpperCase(),
       category:          finalCategory,
-      warehouse,
       availableQuantity: avail,
-      reservedQuantity:  res,
-      damagedQuantity:   dmg,
-      totalQuantity:     avail + res + dmg,
-      reorderLevel:      rl,
+      reservedQuantity:  0,
+      damagedQuantity:   0,
+      totalQuantity:     avail,
+      reorderLevel:      10,
     });
   };
 
@@ -124,8 +104,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
     productName.trim() !== '' &&
     sku.trim() !== '' &&
     (category !== 'ADD_CUSTOM' || customCat.trim() !== '') &&
-    allQtyValid &&
-    !isNaN(rl) && rl >= 0;
+    qtyValid;
 
   return (
     <Modal
@@ -134,7 +113,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
       title="Add New Product"
       subtitle="Create a new inventory record"
       icon={<IconPlus />}
-      iconClass="modal-header-icon--green"
+      iconClass="modal-header-icon--violet"
       size="lg"
       footer={
         <>
@@ -144,7 +123,7 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
           <button
             type="submit"
             form="add-product-form"
-            className="modal-btn modal-btn--green"
+            className="modal-btn modal-btn--purple"
             disabled={!isFormValid}
             aria-label="Save new product"
           >
@@ -234,92 +213,18 @@ const AddProductModal = ({ existingSkus = [], onClose, onConfirm }) => {
           </div>
         )}
 
-        {/* ── Warehouse | Reorder Level ── */}
-        <div className="mf-row">
-          <div className="mf-group">
-            <label htmlFor="ap-warehouse" className="mf-label">
-              Warehouse <span className="mf-required" aria-hidden="true">*</span>
-            </label>
-            <select
-              id="ap-warehouse"
-              className="mf-select"
-              value={warehouse}
-              onChange={(e) => setWarehouse(e.target.value)}
-            >
-              {WAREHOUSES.map((w) => (
-                <option key={w} value={w}>{w}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mf-group">
-            <label htmlFor="ap-reorder" className="mf-label">
-              Reorder Level <span className="mf-required" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="ap-reorder"
-              type="number"
-              min="0"
-              step="1"
-              className={`mf-input${errors.reorderLvl ? ' mf-error' : ''}`}
-              value={reorderLvl}
-              onChange={(e) => { setReorderLvl(e.target.value); setErrors((p) => ({ ...p, reorderLvl: '' })); }}
-            />
-            {errors.reorderLvl && (
-              <span className="mf-error-msg" role="alert">⚠ {errors.reorderLvl}</span>
-            )}
-          </div>
-        </div>
-
-        {/* ── Initial Quantities ── */}
-        <div className="mf-row">
-          <div className="mf-group">
-            <label htmlFor="ap-avail" className="mf-label">Available Qty</label>
-            <input
-              id="ap-avail"
-              type="number"
-              min="0"
-              step="1"
-              className={`mf-input${errors.available ? ' mf-error' : ''}`}
-              value={available}
-              onChange={(e) => { setAvailable(e.target.value); setErrors((p) => ({ ...p, available: '' })); }}
-            />
-          </div>
-
-          <div className="mf-group">
-            <label htmlFor="ap-res" className="mf-label">Reserved Qty</label>
-            <input
-              id="ap-res"
-              type="number"
-              min="0"
-              step="1"
-              className={`mf-input${errors.reserved ? ' mf-error' : ''}`}
-              value={reserved}
-              onChange={(e) => { setReserved(e.target.value); setErrors((p) => ({ ...p, reserved: '' })); }}
-            />
-          </div>
-        </div>
-
-        <div className="mf-row">
-          <div className="mf-group">
-            <label htmlFor="ap-dmg" className="mf-label">Damaged Qty</label>
-            <input
-              id="ap-dmg"
-              type="number"
-              min="0"
-              step="1"
-              className={`mf-input${errors.damaged ? ' mf-error' : ''}`}
-              value={damaged}
-              onChange={(e) => { setDamaged(e.target.value); setErrors((p) => ({ ...p, damaged: '' })); }}
-            />
-          </div>
-
-          <div className="mf-group">
-            <label className="mf-label">Calculated Total</label>
-            <div className="mf-readonly" aria-live="polite">
-              {avail + res + dmg} units
-            </div>
-          </div>
+        {/* ── Initial Quantity ── */}
+        <div className="mf-group">
+          <label htmlFor="ap-avail" className="mf-label">Available / Total Quantity</label>
+          <input
+            id="ap-avail"
+            type="number"
+            min="0"
+            step="1"
+            className={`mf-input${errors.available ? ' mf-error' : ''}`}
+            value={available}
+            onChange={(e) => { setAvailable(e.target.value); setErrors((p) => ({ ...p, available: '' })); }}
+          />
         </div>
 
       </form>

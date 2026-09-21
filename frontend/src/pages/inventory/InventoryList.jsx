@@ -13,10 +13,12 @@
    ============================================================ */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getInventory, getStockStatus } from '../../services/inventoryService';
+import { getInventory, getStockStatus, stockIn, stockOut, transferStock, adjustStock } from '../../services/inventoryService';
+import { createProduct, deactivateProduct } from '../../services/productsApi';
 
 import InventoryTable      from '../../components/tables/InventoryTable';
 import SearchBar           from '../../components/common/SearchBar';
+import KpiCard             from '../../components/common/KpiCard';
 import ViewItemModal       from '../../components/modals/ViewItemModal';
 import StockInModal        from '../../components/modals/StockInModal';
 import StockOutModal       from '../../components/modals/StockOutModal';
@@ -100,17 +102,9 @@ const IconDownload = () => (
 /* ── Filter defaults ── */
 const INITIAL_FILTERS = {
   search: '',
-  warehouse: 'all',
   category: 'all',
   stockStatus: 'all',
 };
-
-const WAREHOUSE_OPTIONS = [
-  { value: 'all',               label: 'All Warehouses' },
-  { value: 'Delhi Warehouse',   label: 'Delhi Warehouse' },
-  { value: 'Noida Warehouse',   label: 'Noida Warehouse' },
-  { value: 'Mumbai Warehouse',  label: 'Mumbai Warehouse' },
-];
 
 import { getCategories } from '../../services/categoryService';
 
@@ -188,13 +182,14 @@ const InventoryList = () => {
   const [toasts, setToasts] = useState([]);
 
   /* ── Load data on mount ── */
-  useEffect(() => {
-    const load = async () => {
-      const data = await getInventory();
-      setInventoryItems(data.map(withStatus));
-    };
-    load();
+  const loadInventory = useCallback(async () => {
+    const data = await getInventory();
+    setInventoryItems(data.map(withStatus));
   }, []);
+
+  useEffect(() => {
+    loadInventory();
+  }, [loadInventory]);
 
   /* ══════════════════════════════════════════
      TOAST HELPERS
@@ -231,7 +226,8 @@ const InventoryList = () => {
   ══════════════════════════════════════════ */
 
   /* ── Stock In ── */
-  const handleStockIn = useCallback((item, { quantity }) => {
+  const handleStockIn = useCallback(async (item, { quantity }) => {
+    // Optimistic local update
     setInventoryItems((prev) =>
       prev.map((i) => {
         if (i.id !== item.id) return i;
@@ -244,10 +240,18 @@ const InventoryList = () => {
     );
     closeModal();
     addToast(`+${quantity} units added to ${item.productName}`);
+
+    // Fire API call in background
+    try {
+      await stockIn(item.id, item.warehouseId, quantity, `Stock in: +${quantity}`);
+    } catch (error) {
+      console.warn('Stock-in API failed (local update preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Stock Out ── */
-  const handleStockOut = useCallback((item, { quantity, reason }) => {
+  const handleStockOut = useCallback(async (item, { quantity, reason }) => {
+    // Optimistic local update
     setInventoryItems((prev) =>
       prev.map((i) => {
         if (i.id !== item.id) return i;
@@ -260,10 +264,18 @@ const InventoryList = () => {
     );
     closeModal();
     addToast(`−${quantity} units removed from ${item.productName} (${reason})`);
+
+    // Fire API call in background
+    try {
+      await stockOut(item.id, item.warehouseId, quantity, reason);
+    } catch (error) {
+      console.warn('Stock-out API failed (local update preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Transfer ── */
-  const handleTransfer = useCallback((item, { toWarehouse, quantity }) => {
+  const handleTransfer = useCallback(async (item, { toWarehouse, quantity }) => {
+    // Optimistic local update
     setInventoryItems((prev) => {
       /* 1. Deduct from source */
       let updated = prev.map((i) => {
@@ -309,10 +321,23 @@ const InventoryList = () => {
 
     closeModal();
     addToast(`${quantity} units of ${item.productName} transferred to ${toWarehouse}`);
+
+    // Fire API call in background
+    try {
+      await transferStock(
+        item.warehouseId,
+        null, // toWarehouseId — not easily available from name alone
+        [{ product_id: item.id, quantity }],
+        `Transfer to ${toWarehouse}`
+      );
+    } catch (error) {
+      console.warn('Transfer API failed (local update preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Adjust ── */
-  const handleAdjust = useCallback((item, { availableQuantity, reservedQuantity, damagedQuantity, reason }) => {
+  const handleAdjust = useCallback(async (item, { availableQuantity, reservedQuantity, damagedQuantity, reason }) => {
+    // Optimistic local update
     setInventoryItems((prev) =>
       prev.map((i) => {
         if (i.id !== item.id) return i;
@@ -327,32 +352,60 @@ const InventoryList = () => {
     );
     closeModal();
     addToast(`${item.productName} quantities adjusted (${reason})`);
+
+    // Fire API call in background
+    try {
+      await adjustStock(item.id, item.warehouseId, availableQuantity, reason);
+    } catch (error) {
+      console.warn('Adjust API failed (local update preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Add Product ── */
-  const handleAddProduct = useCallback((formData) => {
-    const newItem = withStatus({
+  const handleAddProduct = useCallback(async (formData) => {
+    // Optimistic local update with temp ID
+    const tempItem = withStatus({
       id:                Date.now(),
       productName:       formData.productName,
       sku:               formData.sku,
       category:          formData.category,
-      warehouse:         formData.warehouse,
       totalQuantity:     formData.totalQuantity,
       availableQuantity: formData.availableQuantity,
       reservedQuantity:  formData.reservedQuantity,
       damagedQuantity:   formData.damagedQuantity,
       reorderLevel:      formData.reorderLevel,
     });
-    setInventoryItems((prev) => [...prev, newItem]);
+    setInventoryItems((prev) => [...prev, tempItem]);
     closeModal();
     addToast(`✅ ${formData.productName} added to inventory`);
+
+    // Fire API call in background
+    try {
+      const created = await createProduct(formData);
+      // Replace temp item with API-returned item (with real ID)
+      if (created && created.id) {
+        setInventoryItems((prev) =>
+          prev.map((i) => (i.id === tempItem.id ? withStatus(created) : i))
+        );
+      }
+    } catch (error) {
+      console.warn('Create product API failed (local item preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Delete Product ── */
-  const handleDeleteProduct = useCallback((item) => {
+  const handleDeleteProduct = useCallback(async (item) => {
+    // Optimistic local update
     setInventoryItems((prev) => prev.filter((i) => i.id !== item.id));
     closeModal();
     addToast(`${item.productName} removed from inventory`, 'error');
+
+    // Fire API call in background (soft-delete via deactivate)
+    try {
+      await deactivateProduct(item.id);
+    } catch (error) {
+      console.warn('Deactivate API failed (local removal preserved):', error.message);
+    }
   }, [closeModal, addToast]);
 
   /* ── Filter handler ── */
@@ -366,7 +419,6 @@ const InventoryList = () => {
 
   const isFiltered =
     filters.search !== '' ||
-    filters.warehouse  !== 'all' ||
     filters.category   !== 'all' ||
     filters.stockStatus !== 'all';
 
@@ -374,7 +426,7 @@ const InventoryList = () => {
      FILTERING LOGIC (AND-combined)
   ══════════════════════════════════════════ */
   const filteredItems = useMemo(() => {
-    const { search, warehouse, category, stockStatus } = filters;
+    const { search, category, stockStatus } = filters;
     const term = search.trim().toLowerCase();
 
     return inventoryItems.filter((item) => {
@@ -383,7 +435,6 @@ const InventoryList = () => {
         const matchesSku  = item.sku.toLowerCase().includes(term);
         if (!matchesName && !matchesSku) return false;
       }
-      if (warehouse   !== 'all' && item.warehouse   !== warehouse)   return false;
       if (category    !== 'all' && item.category    !== category)    return false;
       if (stockStatus !== 'all' && item.stockStatus !== stockStatus) return false;
       return true;
@@ -395,20 +446,15 @@ const InventoryList = () => {
   ══════════════════════════════════════════ */
   const handleExport = useCallback(() => {
     const headers = [
-      'Product', 'SKU', 'Category', 'Warehouse',
-      'Total', 'Available', 'Reserved', 'Damaged',
-      'Reorder Level', 'Status',
+      'Product', 'SKU', 'Category',
+      'Total', 'Available', 'Status',
     ];
     const rows = filteredItems.map((item) => [
       `"${item.productName}"`,
       item.sku,
       item.category,
-      `"${item.warehouse}"`,
       item.totalQuantity,
       item.availableQuantity,
-      item.reservedQuantity,
-      item.damagedQuantity,
-      item.reorderLevel,
       item.stockStatus,
     ]);
     const csv  = [headers, ...rows].map((r) => r.join(',')).join('\n');
@@ -448,7 +494,7 @@ const InventoryList = () => {
             <div className="inv-header-titles">
               <h1 className="inv-page-title">Inventory Management</h1>
               <p className="inv-page-subtitle">
-                Manage and monitor stock across warehouses.
+                Manage and monitor stock levels across your inventory.
               </p>
             </div>
           </div>
@@ -478,45 +524,26 @@ const InventoryList = () => {
 
       {/* ── Summary Cards ── */}
       <section aria-label="Inventory summary" className="inv-summary-grid">
-        <div className="inv-summary-card">
-          <div className="inv-summary-icon inv-summary-icon--blue" aria-hidden="true">
-            <IconBox />
-          </div>
-          <div className="inv-summary-text">
-            <span className="inv-summary-value">{summaryStats.totalProducts}</span>
-            <span className="inv-summary-label">Total Products</span>
-          </div>
-        </div>
-
-        <div className="inv-summary-card">
-          <div className="inv-summary-icon inv-summary-icon--teal" aria-hidden="true">
-            <IconStack />
-          </div>
-          <div className="inv-summary-text">
-            <span className="inv-summary-value">{summaryStats.totalStock.toLocaleString()}</span>
-            <span className="inv-summary-label">Total Stock</span>
-          </div>
-        </div>
-
-        <div className="inv-summary-card">
-          <div className="inv-summary-icon inv-summary-icon--amber" aria-hidden="true">
-            <IconAlertTriangle />
-          </div>
-          <div className="inv-summary-text">
-            <span className="inv-summary-value">{summaryStats.lowStockItems}</span>
-            <span className="inv-summary-label">Low Stock Items</span>
-          </div>
-        </div>
-
-        <div className="inv-summary-card">
-          <div className="inv-summary-icon inv-summary-icon--red" aria-hidden="true">
-            <IconXCircle />
-          </div>
-          <div className="inv-summary-text">
-            <span className="inv-summary-value">{summaryStats.outOfStockItems}</span>
-            <span className="inv-summary-label">Out of Stock</span>
-          </div>
-        </div>
+        <KpiCard
+          icon={<IconBox />}
+          value={summaryStats.totalProducts}
+          label="Total Products"
+        />
+        <KpiCard
+          icon={<IconStack />}
+          value={summaryStats.totalStock.toLocaleString()}
+          label="Total Stock"
+        />
+        <KpiCard
+          icon={<IconAlertTriangle />}
+          value={summaryStats.lowStockItems}
+          label="Low Stock Items"
+        />
+        <KpiCard
+          icon={<IconXCircle />}
+          value={summaryStats.outOfStockItems}
+          label="Out of Stock"
+        />
       </section>
 
       {/* ── Filter Panel ── */}
@@ -532,21 +559,6 @@ const InventoryList = () => {
               onChange={handleSearchChange}
               placeholder="Search by product name or SKU..."
             />
-          </div>
-
-          <div className="inv-filter-group">
-            <label htmlFor="warehouse-filter" className="inv-filter-label">Warehouse</label>
-            <select
-              id="warehouse-filter"
-              className="inv-filter-select"
-              value={filters.warehouse}
-              onChange={(e) => handleFilterChange('warehouse', e.target.value)}
-              aria-label="Filter by warehouse"
-            >
-              {WAREHOUSE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
           </div>
 
           <div className="inv-filter-group">

@@ -3,10 +3,11 @@
    Codlix Technologies · Inventory & Vendor Management System
    ============================================================ */
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, formatDisplayName } from '../../context/AuthContext';
-import { inventoryData, getStockStatus } from '../../services/inventoryService';
+import { getInventory, getStockStatus, getTransactions } from '../../services/inventoryService';
+import KpiCard from '../../components/common/KpiCard';
 import './Dashboard.css';
 
 /* ── Get first name from user object ── */
@@ -100,14 +101,58 @@ const IconSparkle = () => (
   </svg>
 );
 
-/* ── Mock Recent Activity ── */
-const RECENT_ACTIVITY = [
+/* ── Fallback Recent Activity (used when API returns nothing) ── */
+const FALLBACK_ACTIVITY = [
   { id: 1, action: 'Stock In',   product: 'Laptop (LP-001)',          qty: '+20 units', warehouse: 'Delhi Warehouse',  time: '2 hours ago',   color: 'act--green' },
   { id: 2, action: 'Stock Out',  product: 'Wireless Mouse (MS-002)',  qty: '-5 units',  warehouse: 'Delhi Warehouse',  time: '4 hours ago',   color: 'act--orange' },
   { id: 3, action: 'Transfer',   product: 'Office Chair (CH-004)',    qty: '3 units',   warehouse: 'Mumbai → Noida',   time: 'Yesterday',     color: 'act--blue' },
   { id: 4, action: 'Adjustment', product: 'A4 Paper Ream (AP-008)',   qty: '-2 units',  warehouse: 'Delhi Warehouse',  time: 'Yesterday',     color: 'act--red' },
   { id: 5, action: 'Stock In',   product: 'USB-C Hub (UH-007)',       qty: '+15 units', warehouse: 'Mumbai Warehouse', time: '2 days ago',    color: 'act--green' },
 ];
+
+/**
+ * Normalize API transaction into dashboard activity format.
+ */
+const normalizeTransaction = (tx, index) => {
+  const typeMap = {
+    'STOCK_IN': { action: 'Stock In', color: 'act--green', prefix: '+' },
+    'STOCK_OUT': { action: 'Stock Out', color: 'act--orange', prefix: '-' },
+    'TRANSFER': { action: 'Transfer', color: 'act--blue', prefix: '' },
+    'ADJUSTMENT': { action: 'Adjustment', color: 'act--red', prefix: '' },
+  };
+
+  const info = typeMap[tx.type] || typeMap[tx.transaction_type] || { action: tx.type || 'Activity', color: 'act--blue', prefix: '' };
+
+  const timeDiff = tx.created_at ? getTimeAgo(tx.created_at) : 'Recently';
+
+  return {
+    id: tx.id || index + 1,
+    action: info.action,
+    product: tx.product_name || tx.product || `Product #${tx.product_id || ''}`,
+    qty: `${info.prefix}${tx.quantity || 0} units`,
+    warehouse: tx.warehouse_name || tx.warehouse || '',
+    time: timeDiff,
+    color: info.color,
+  };
+};
+
+/**
+ * Simple time-ago formatter.
+ */
+const getTimeAgo = (dateStr) => {
+  const now = new Date();
+  const then = new Date(dateStr);
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return then.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+};
 
 /* ══════════════════════════════════════════
    Dashboard Component
@@ -117,20 +162,51 @@ const Dashboard = () => {
   const firstName = getFirstName(user);
   const greeting  = getGreeting();
 
+  /* ── Live inventory data ── */
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [recentActivity, setRecentActivity] = useState(FALLBACK_ACTIVITY);
+  const [isLoading, setIsLoading] = useState(true);
+
+  /* ── Fetch data on mount ── */
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch inventory
+        const items = await getInventory();
+        const withStatus = items.map((item) => ({
+          ...item,
+          stockStatus: getStockStatus(item),
+        }));
+        setInventoryItems(withStatus);
+
+        // Fetch recent transactions
+        try {
+          const transactions = await getTransactions();
+          if (Array.isArray(transactions) && transactions.length > 0) {
+            setRecentActivity(transactions.slice(0, 5).map(normalizeTransaction));
+          }
+        } catch {
+          // Keep fallback activity
+        }
+      } catch (error) {
+        console.warn('Dashboard data load failed, using defaults:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
   /* ── Compute KPIs from live inventory data ── */
   const stats = useMemo(() => {
-    const withStatus = inventoryData.map((item) => ({
-      ...item,
-      stockStatus: getStockStatus(item),
-    }));
-
     return {
-      totalProducts:  withStatus.length,
-      totalStock:     withStatus.reduce((sum, i) => sum + i.totalQuantity, 0),
-      lowStock:       withStatus.filter((i) => i.stockStatus === 'Low Stock').length,
-      outOfStock:     withStatus.filter((i) => i.stockStatus === 'Out of Stock').length,
+      totalProducts:  inventoryItems.length,
+      totalStock:     inventoryItems.reduce((sum, i) => sum + (i.totalQuantity || 0), 0),
+      lowStock:       inventoryItems.filter((i) => i.stockStatus === 'Low Stock').length,
+      outOfStock:     inventoryItems.filter((i) => i.stockStatus === 'Out of Stock').length,
     };
-  }, []);
+  }, [inventoryItems]);
 
   return (
     <div className="db-page">
@@ -167,79 +243,37 @@ const Dashboard = () => {
 
       {/* ── 3D Elevated KPI Cards Grid ── */}
       <section className="db-kpi-grid" aria-label="Key performance indicators">
+        <KpiCard
+          icon={<IconBox />}
+          badge="Active SKUs"
+          value={isLoading ? '...' : stats.totalProducts}
+          label="Total Catalog Products"
+          trend="Across 3 active warehouses"
+        />
 
-        {/* Total Products */}
-        <div className="db-kpi-card db-kpi-card--blue">
-          <div className="db-kpi-card-header">
-            <div className="db-kpi-icon db-kpi-icon--blue" aria-hidden="true">
-              <IconBox />
-            </div>
-            <span className="db-kpi-badge db-kpi-badge--blue">Active SKUs</span>
-          </div>
-          <div className="db-kpi-body">
-            <span className="db-kpi-value">{stats.totalProducts}</span>
-            <span className="db-kpi-label">Total Catalog Products</span>
-          </div>
-          <div className="db-kpi-trend db-kpi-trend--neutral">
-            <span className="trend-dot trend-dot--blue" />
-            Across 3 active warehouses
-          </div>
-        </div>
+        <KpiCard
+          icon={<IconStack />}
+          badge="In Stock"
+          value={isLoading ? '...' : stats.totalStock.toLocaleString()}
+          label="Total Stock Units"
+          trend="All locations combined"
+        />
 
-        {/* Total Stock Units */}
-        <div className="db-kpi-card db-kpi-card--teal">
-          <div className="db-kpi-card-header">
-            <div className="db-kpi-icon db-kpi-icon--teal" aria-hidden="true">
-              <IconStack />
-            </div>
-            <span className="db-kpi-badge db-kpi-badge--teal">In Stock</span>
-          </div>
-          <div className="db-kpi-body">
-            <span className="db-kpi-value">{stats.totalStock.toLocaleString()}</span>
-            <span className="db-kpi-label">Total Stock Units</span>
-          </div>
-          <div className="db-kpi-trend db-kpi-trend--neutral">
-            <span className="trend-dot trend-dot--teal" />
-            All locations combined
-          </div>
-        </div>
+        <KpiCard
+          icon={<IconAlertTriangle />}
+          badge="Warning"
+          value={isLoading ? '...' : stats.lowStock}
+          label="Low Stock Items"
+          trend="Requires reorder attention"
+        />
 
-        {/* Low Stock Items */}
-        <div className="db-kpi-card db-kpi-card--amber">
-          <div className="db-kpi-card-header">
-            <div className="db-kpi-icon db-kpi-icon--amber" aria-hidden="true">
-              <IconAlertTriangle />
-            </div>
-            <span className="db-kpi-badge db-kpi-badge--amber">Warning</span>
-          </div>
-          <div className="db-kpi-body">
-            <span className="db-kpi-value db-kpi-value--amber">{stats.lowStock}</span>
-            <span className="db-kpi-label">Low Stock Items</span>
-          </div>
-          <div className="db-kpi-trend db-kpi-trend--warn">
-            <span className="trend-dot trend-dot--amber" />
-            Requires reorder attention
-          </div>
-        </div>
-
-        {/* Out of Stock */}
-        <div className="db-kpi-card db-kpi-card--red">
-          <div className="db-kpi-card-header">
-            <div className="db-kpi-icon db-kpi-icon--red" aria-hidden="true">
-              <IconXCircle />
-            </div>
-            <span className="db-kpi-badge db-kpi-badge--red">Critical</span>
-          </div>
-          <div className="db-kpi-body">
-            <span className="db-kpi-value db-kpi-value--red">{stats.outOfStock}</span>
-            <span className="db-kpi-label">Out of Stock</span>
-          </div>
-          <div className="db-kpi-trend db-kpi-trend--danger">
-            <span className="trend-dot trend-dot--red" />
-            Immediate action needed
-          </div>
-        </div>
-
+        <KpiCard
+          icon={<IconXCircle />}
+          badge="Critical"
+          value={isLoading ? '...' : stats.outOfStock}
+          label="Out of Stock"
+          trend="Immediate action needed"
+        />
       </section>
 
       {/* ── Bottom Row: Activity + Quick Access ── */}
@@ -256,7 +290,7 @@ const Dashboard = () => {
           </div>
 
           <ul className="db-activity-list" aria-label="Recent inventory activity">
-            {RECENT_ACTIVITY.map((item) => (
+            {recentActivity.map((item) => (
               <li key={item.id} className="db-activity-item">
                 <span className={`db-activity-tag ${item.color}`}>{item.action}</span>
                 <div className="db-activity-info">
@@ -338,7 +372,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-

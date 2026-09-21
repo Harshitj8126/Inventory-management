@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { monthlyStockData, categorySpendData, topMovingItems } from '../../services/mockData';
 import { inventoryData, getStockStatus } from '../../services/inventoryService';
 import Modal from '../../components/modals/Modal';
+import KpiCard from '../../components/common/KpiCard';
 import './Reports.css';
 
 const IconBarChart = () => (
@@ -89,18 +90,12 @@ const Reports = () => {
       {/* ── KPI Row ── */}
       <div className="rpt-kpi-row" role="list" aria-label="Key metrics">
         {[
-          { label: 'Total Movements', value: stats.totalMoves,       trend: '+18%', trendType: 'up' },
-          { label: 'Units Received',  value: stats.totalIn,          trend: '+12%', trendType: 'up' },
-          { label: 'Units Dispatched',value: stats.totalOut,         trend: '+9%',  trendType: 'up' },
-          { label: 'Low Stock Items', value: stats.lowStock,         trend: '—',    trendType: 'neutral' },
+          { label: 'Total Movements', value: stats.totalMoves,       trend: '+18% vs last month' },
+          { label: 'Units Received',  value: stats.totalIn,          trend: '+12% vs last month' },
+          { label: 'Units Dispatched',value: stats.totalOut,         trend: '+9% vs last month' },
+          { label: 'Low Stock Items', value: stats.lowStock,         trend: 'Active monitoring' },
         ].map((k, i) => (
-          <div key={i} className="rpt-kpi-card" role="listitem">
-            <div className="rpt-kpi-label">{k.label}</div>
-            <div className="rpt-kpi-value">{k.value}</div>
-            <span className={`rpt-kpi-trend rpt-kpi-trend--${k.trendType}`}>
-              {k.trendType === 'up' && <IconTrendUp />} {k.trend}
-            </span>
-          </div>
+          <KpiCard key={i} label={k.label} value={k.value} trend={k.trend} />
         ))}
       </div>
 

@@ -362,6 +362,21 @@
   cursor: not-allowed;
 }
 
+.modal-btn--purple {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+.modal-btn--purple:hover:not(:disabled) {
+  background-color: #6d28d9;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+.modal-btn--purple:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .modal-btn--orange {
   background-color: #ea580c;
   color: #ffffff;

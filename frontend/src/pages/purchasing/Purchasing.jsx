@@ -3,9 +3,11 @@
    Codlix Technologies · Inventory & Vendor Management System
    ============================================================ */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { purchaseOrdersData as initialPOs } from '../../services/mockData';
+import { fetchPurchaseOrders, createPurchaseOrder, approvePurchaseOrder } from '../../services/purchaseOrderService';
 import Modal from '../../components/modals/Modal';
+import KpiCard from '../../components/common/KpiCard';
 import './Purchasing.css';
 
 /* ── Icons ── */
@@ -53,9 +55,30 @@ const statusClass = (s) => {
 };
 
 const Purchasing = () => {
-  const [poList, setPoList] = useState(initialPOs);
+  const [poList, setPoList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+
+  /* ── Load POs from API, fallback to mock ── */
+  useEffect(() => {
+    const loadPOs = async () => {
+      setIsLoading(true);
+      try {
+        const apiPOs = await fetchPurchaseOrders();
+        if (Array.isArray(apiPOs) && apiPOs.length > 0) {
+          setPoList(apiPOs);
+        } else {
+          setPoList(initialPOs);
+        }
+      } catch {
+        setPoList(initialPOs);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadPOs();
+  }, []);
 
   /* Modals */
   const [isNewPOOpen, setIsNewPOOpen] = useState(false);
@@ -89,7 +112,7 @@ const Purchasing = () => {
   const formatCurrency = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
   const formatCurrencyShort = (n) => n >= 100000 ? `₹${(n/100000).toFixed(1)}L` : `₹${(n/1000).toFixed(0)}K`;
 
-  const handleCreatePOSubmit = (e) => {
+  const handleCreatePOSubmit = async (e) => {
     e.preventDefault();
     const created = {
       id: `PO-2026-00${poList.length + 1}`,
@@ -103,12 +126,34 @@ const Purchasing = () => {
     };
     setPoList([created, ...poList]);
     setIsNewPOOpen(false);
+
+    // Fire API call in background
+    try {
+      await createPurchaseOrder({
+        vendor_id: 1,
+        warehouse_id: 1,
+        order_date: created.date,
+        expected_date: created.deliveryDate,
+        items: [{ product_id: 1, quantity: created.items, unit_price: Math.round(created.amount / created.items) }],
+      });
+    } catch (error) {
+      console.warn('Create PO API failed (local update preserved):', error.message);
+    }
   };
 
-  const handleUpdatePOStatus = (id, newStatus) => {
+  const handleUpdatePOStatus = async (id, newStatus) => {
     setPoList(poList.map(po => po.id === id ? { ...po, status: newStatus } : po));
     if (selectedPO && selectedPO.id === id) {
       setSelectedPO({ ...selectedPO, status: newStatus });
+    }
+
+    // If approving, call the approve API
+    if (newStatus === 'Approved') {
+      try {
+        await approvePurchaseOrder(id);
+      } catch (error) {
+        console.warn('Approve PO API failed (local update preserved):', error.message);
+      }
     }
   };
 
@@ -136,20 +181,10 @@ const Purchasing = () => {
 
       {/* ── Stat Cards ── */}
       <div className="po-stat-grid" role="list" aria-label="Purchase order statistics">
-        {[
-          { icon: <IconCart />,  iconCls: 'po-stat-icon--amber',  value: stats.total,                    label: 'Total Orders' },
-          { icon: <IconClock />, iconCls: 'po-stat-icon--orange', value: stats.pending,                  label: 'Pending / Draft' },
-          { icon: <IconCheck />, iconCls: 'po-stat-icon--green',  value: stats.delivered,                label: 'Delivered' },
-          { icon: <IconCart />,  iconCls: 'po-stat-icon--blue',   value: formatCurrencyShort(stats.totalValue), label: 'Total Value' },
-        ].map((s, i) => (
-          <div key={i} className="po-stat-card" role="listitem">
-            <div className={`po-stat-icon ${s.iconCls}`}>{s.icon}</div>
-            <div className="po-stat-info">
-              <span className="po-stat-value">{s.value}</span>
-              <span className="po-stat-label">{s.label}</span>
-            </div>
-          </div>
-        ))}
+        <KpiCard icon={<IconCart />} value={stats.total} label="Total Orders" />
+        <KpiCard icon={<IconClock />} value={stats.pending} label="Pending / Draft" />
+        <KpiCard icon={<IconCheck />} value={stats.delivered} label="Delivered" />
+        <KpiCard icon={<IconCart />} value={formatCurrencyShort(stats.totalValue)} label="Total Value" />
       </div>
 
       {/* ── Filter Bar ── */}

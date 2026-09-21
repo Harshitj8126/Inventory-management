@@ -71,14 +71,6 @@ const ViewItemModal = ({ item, onClose }) => {
           <span className="view-info-value">{item.category}</span>
         </div>
         <div className="view-info-item">
-          <span className="view-info-label">Warehouse</span>
-          <span className="view-info-value">{item.warehouse}</span>
-        </div>
-        <div className="view-info-item">
-          <span className="view-info-label">Reorder Level</span>
-          <span className="view-info-value">{item.reorderLevel} units</span>
-        </div>
-        <div className="view-info-item">
           <span className="view-info-label">Stock Status</span>
           <StatusBadge status={item.stockStatus} />
         </div>
@@ -87,7 +79,7 @@ const ViewItemModal = ({ item, onClose }) => {
       {/* ── Stock Breakdown Bar ── */}
       <div className="view-stock-bar-wrapper">
         <div className="view-stock-bar-labels">
-          <span>Stock breakdown (total: {total} units)</span>
+          <span>Stock Status</span>
           <span className={`view-info-value ${valueClass}`}>{item.stockStatus}</span>
         </div>
 
@@ -97,30 +89,12 @@ const ViewItemModal = ({ item, onClose }) => {
             style={{ width: `${availablePct}%` }}
             title={`Available: ${item.availableQuantity}`}
           />
-          <div
-            className="view-stock-bar-reserved"
-            style={{ width: `${reservedPct}%` }}
-            title={`Reserved: ${item.reservedQuantity}`}
-          />
-          <div
-            className="view-stock-bar-damaged"
-            style={{ width: `${damagedPct}%` }}
-            title={`Damaged: ${item.damagedQuantity}`}
-          />
         </div>
 
         <div className="view-stock-bar-legend">
           <span className="view-legend-item">
             <span className="view-legend-dot view-legend-dot--green" aria-hidden="true" />
             Available ({item.availableQuantity})
-          </span>
-          <span className="view-legend-item">
-            <span className="view-legend-dot view-legend-dot--blue" aria-hidden="true" />
-            Reserved ({item.reservedQuantity})
-          </span>
-          <span className="view-legend-item">
-            <span className="view-legend-dot view-legend-dot--red" aria-hidden="true" />
-            Damaged ({item.damagedQuantity})
           </span>
         </div>
       </div>
@@ -134,18 +108,8 @@ const ViewItemModal = ({ item, onClose }) => {
           <span className="view-info-value">{item.totalQuantity}</span>
         </div>
         <div className="view-info-item">
-          <span className="view-info-label">Available</span>
+          <span className="view-info-label">Available Quantity</span>
           <span className="view-info-value view-info-value--green">{item.availableQuantity}</span>
-        </div>
-        <div className="view-info-item">
-          <span className="view-info-label">Reserved</span>
-          <span className="view-info-value">{item.reservedQuantity}</span>
-        </div>
-        <div className="view-info-item">
-          <span className="view-info-label">Damaged</span>
-          <span className={`view-info-value ${item.damagedQuantity > 0 ? 'view-info-value--red' : ''}`}>
-            {item.damagedQuantity}
-          </span>
         </div>
       </div>
     </Modal>

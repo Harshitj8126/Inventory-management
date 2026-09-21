@@ -1,11 +1,7 @@
-/* ============================================================
-   InventoryTable.jsx — Reusable Inventory Data Table
-   Codlix Technologies · Inventory & Vendor Management System
-   ============================================================ */
-
+import { useState, useRef, useEffect } from 'react';
 import StatusBadge from '../common/StatusBadge';
 
-/* ── SVG Icons for Action Buttons ── */
+/* ── SVG Icons for Action Buttons & Dropdown ── */
 const IconEye = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -33,33 +29,6 @@ const IconArrowUp = () => (
   </svg>
 );
 
-const IconTransfer = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    aria-hidden="true">
-    <polyline points="17 1 21 5 17 9" />
-    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-    <polyline points="7 23 3 19 7 15" />
-    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-  </svg>
-);
-
-const IconAdjust = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    aria-hidden="true">
-    <line x1="4" y1="21" x2="4" y2="14" />
-    <line x1="4" y1="10" x2="4" y2="3" />
-    <line x1="12" y1="21" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12" y2="3" />
-    <line x1="20" y1="21" x2="20" y2="16" />
-    <line x1="20" y1="12" x2="20" y2="3" />
-    <line x1="1" y1="14" x2="7" y2="14" />
-    <line x1="9" y1="8" x2="15" y2="8" />
-    <line x1="17" y1="16" x2="23" y2="16" />
-  </svg>
-);
-
 const IconEmpty = () => (
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"
@@ -69,6 +38,7 @@ const IconEmpty = () => (
     <line x1="12" y1="17" x2="12" y2="21" />
   </svg>
 );
+
 const IconTrash = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -80,76 +50,101 @@ const IconTrash = () => (
   </svg>
 );
 
+const IconChevronDown = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
 
-/* ── Action Buttons Row ── */
-const ActionButtons = ({ item, onAction }) => {
+/* ── Action Dropdown Menu Component ── */
+const ActionDropdown = ({ item, onAction }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (type) => {
+    setIsOpen(false);
+    onAction(type, item);
+  };
+
   return (
-    <div className="inv-action-group" role="group" aria-label={`Actions for ${item.productName}`}>
+    <div className="inv-dropdown-wrap" ref={dropdownRef}>
       <button
         type="button"
-        className="inv-action-btn inv-action-btn--view"
-        onClick={() => onAction('view', item)}
-        aria-label={`View ${item.productName}`}
-        title="View"
+        className={`inv-dropdown-trigger ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        aria-label={`Actions menu for ${item.productName}`}
+        title="Actions"
       >
-        <IconEye />
-        <span>View</span>
+        <span>Actions</span>
+        <IconChevronDown />
       </button>
 
-      <button
-        type="button"
-        className="inv-action-btn inv-action-btn--stock-in"
-        onClick={() => onAction('stock-in', item)}
-        aria-label={`Stock In for ${item.productName}`}
-        title="Stock In"
-      >
-        <IconArrowDown />
-        <span>In</span>
-      </button>
+      {isOpen && (
+        <div className="inv-dropdown-menu" role="menu">
+          <button
+            type="button"
+            className="inv-dropdown-item"
+            onClick={() => handleSelect('view')}
+            role="menuitem"
+          >
+            <IconEye />
+            <span>View</span>
+          </button>
 
-      <button
-        type="button"
-        className="inv-action-btn inv-action-btn--stock-out"
-        onClick={() => onAction('stock-out', item)}
-        aria-label={`Stock Out for ${item.productName}`}
-        title="Stock Out"
-      >
-        <IconArrowUp />
-        <span>Out</span>
-      </button>
+          <button
+            type="button"
+            className="inv-dropdown-item inv-dropdown-item--in"
+            onClick={() => handleSelect('stock-in')}
+            role="menuitem"
+          >
+            <IconArrowDown />
+            <span>Stock In</span>
+          </button>
 
-      <button
-        type="button"
-        className="inv-action-btn inv-action-btn--transfer"
-        onClick={() => onAction('transfer', item)}
-        aria-label={`Transfer ${item.productName}`}
-        title="Transfer"
-      >
-        <IconTransfer />
-        <span>Transfer</span>
-      </button>
+          <button
+            type="button"
+            className="inv-dropdown-item inv-dropdown-item--out"
+            onClick={() => handleSelect('stock-out')}
+            role="menuitem"
+          >
+            <IconArrowUp />
+            <span>Stock Out</span>
+          </button>
 
-      <button
-        type="button"
-        className="inv-action-btn inv-action-btn--adjust"
-        onClick={() => onAction('adjust', item)}
-        aria-label={`Adjust ${item.productName}`}
-        title="Adjust"
-      >
-        <IconAdjust />
-        <span>Adjust</span>
-      </button>
+          <div className="inv-dropdown-divider" role="separator" />
 
-      <button
-        type="button"
-        className="inv-action-btn inv-action-btn--delete"
-        onClick={() => onAction('delete', item)}
-        aria-label={`Delete ${item.productName}`}
-        title="Delete"
-      >
-        <IconTrash />
-        <span>Delete</span>
-      </button>
+          <button
+            type="button"
+            className="inv-dropdown-item inv-dropdown-item--danger"
+            onClick={() => handleSelect('delete')}
+            role="menuitem"
+          >
+            <IconTrash />
+            <span>Delete</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -190,12 +185,8 @@ const InventoryTable = ({ items, onAction }) => {
             <th scope="col">Product</th>
             <th scope="col">SKU</th>
             <th scope="col">Category</th>
-            <th scope="col">Warehouse</th>
             <th scope="col" className="inv-th-num">Total</th>
             <th scope="col" className="inv-th-num">Available</th>
-            <th scope="col" className="inv-th-num">Reserved</th>
-            <th scope="col" className="inv-th-num">Damaged</th>
-            <th scope="col" className="inv-th-num">Reorder Lvl</th>
             <th scope="col">Status</th>
             <th scope="col">Actions</th>
           </tr>
@@ -212,20 +203,13 @@ const InventoryTable = ({ items, onAction }) => {
               <td>
                 <span className="inv-category-tag">{item.category}</span>
               </td>
-              <td className="inv-td-warehouse">
-                <span className="inv-warehouse-icon" aria-hidden="true">🏭</span>
-                {item.warehouse}
-              </td>
               <td className="inv-td-num">{item.totalQuantity.toLocaleString()}</td>
               <td className="inv-td-num inv-td-available">{item.availableQuantity.toLocaleString()}</td>
-              <td className="inv-td-num">{item.reservedQuantity.toLocaleString()}</td>
-              <td className="inv-td-num inv-td-damaged">{item.damagedQuantity.toLocaleString()}</td>
-              <td className="inv-td-num">{item.reorderLevel.toLocaleString()}</td>
               <td>
                 <StatusBadge status={item.stockStatus} />
               </td>
               <td className="inv-td-actions">
-                <ActionButtons item={item} onAction={onAction} />
+                <ActionDropdown item={item} onAction={onAction} />
               </td>
             </tr>
           ))}

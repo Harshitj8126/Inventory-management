@@ -11,6 +11,7 @@
    ============================================================ */
 
 import { createContext, useContext, useState, useCallback } from 'react';
+import { clearAuthToken } from '../services/authService';
 
 /* ── Create Context ── */
 const AuthContext = createContext(null);
@@ -115,6 +116,7 @@ export const AuthProvider = ({ children }) => {
   /* logout — clear session and user state */
   const logout = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
+    clearAuthToken();
     setUser(null);
   }, []);
 

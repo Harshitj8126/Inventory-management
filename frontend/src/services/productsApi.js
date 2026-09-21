@@ -1,20 +1,25 @@
 /* ============================================================
    productsApi.js — Live Products API Service
-   Target Endpoint: https://inventory-vendor-management-system.onrender.com/api/v1/products/
+   Codlix Technologies · Inventory & Vendor Management System
+   ============================================================
+   Integrates with:
+     GET   /api/v1/products/              — List products
+     POST  /api/v1/products/              — Create product
+     GET   /api/v1/products/{id}/         — Get product detail
+     PATCH /api/v1/products/{id}/         — Edit product
+     PATCH /api/v1/products/{id}/deactivate/ — Soft-delete product
    ============================================================ */
 
-export const PRODUCTS_API_URL =
-  import.meta.env.VITE_PRODUCTS_API_URL ||
-  'https://inventory-vendor-management-system.onrender.com/api/v1/products/';
+import api from './apiClient';
 
 /**
  * Helper function to map API payload fields to internal UI state schema
  */
 export const normalizeProduct = (item) => {
-  const avail = item.available_quantity ?? item.quantity ?? 25;
-  const res = item.reserved_quantity ?? 4;
-  const dmg = item.damaged_quantity ?? 1;
-  const total = item.total_quantity ?? (avail + res + dmg);
+  const avail = item.available_qty ?? item.available_quantity ?? item.quantity ?? 25;
+  const res = item.reserved_qty ?? item.reserved_quantity ?? 4;
+  const dmg = item.damaged_qty ?? item.damaged_quantity ?? 1;
+  const total = item.total_qty ?? item.total_quantity ?? (avail + res + dmg);
   const reorder = item.reorder_level ?? 10;
 
   return {
@@ -22,7 +27,8 @@ export const normalizeProduct = (item) => {
     productName: item.name || item.productName || 'Unnamed Product',
     sku: item.sku || `SKU-${item.id}`,
     category: item.category_name || item.category || 'Electronics',
-    warehouse: item.warehouse || 'Delhi Warehouse',
+    warehouse: item.warehouse_name || item.warehouse || 'Delhi Warehouse',
+    warehouseId: item.warehouse_id || item.warehouseId || null,
     totalQuantity: total,
     availableQuantity: avail,
     reservedQuantity: res,
@@ -40,20 +46,13 @@ export const normalizeProduct = (item) => {
  */
 export const fetchProducts = async () => {
   try {
-    const response = await fetch(PRODUCTS_API_URL, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+    const result = await api.get('/products/');
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (result && result.success && Array.isArray(result.data)) {
+      return result.data.map((item) => normalizeProduct(item));
     }
-
-    const result = await response.json();
-    if (result && Array.isArray(result.data)) {
+    // Some API responses may have data directly as array
+    if (Array.isArray(result.data)) {
       return result.data.map((item) => normalizeProduct(item));
     }
     return [];
@@ -64,40 +63,46 @@ export const fetchProducts = async () => {
 };
 
 /**
+ * Get a single product by ID.
+ * GET /api/v1/products/{id}/
+ */
+export const fetchProductById = async (id) => {
+  try {
+    const result = await api.get(`/products/${id}/`);
+    const item = result.data || result;
+    return normalizeProduct(item);
+  } catch (error) {
+    console.error(`Failed to fetch product #${id}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Create a new product via the live API.
+ * POST /api/v1/products/
  */
 export const createProduct = async (productPayload) => {
   try {
     const apiBody = {
       name: productPayload.productName || productPayload.name,
       sku: productPayload.sku,
-      category_id: 1, // Default category ID for API
+      category_id: productPayload.categoryId || productPayload.category_id || 1,
+      warehouse_id: productPayload.warehouseId || productPayload.warehouse_id || 1,
       reorder_level: parseInt(productPayload.reorderLevel || productPayload.reorder_level || 10, 10),
+      available_qty: parseInt(productPayload.availableQuantity || productPayload.available_qty || 0, 10),
+      reserved_qty: parseInt(productPayload.reservedQuantity || productPayload.reserved_qty || 0, 10),
+      damaged_qty: parseInt(productPayload.damagedQuantity || productPayload.damaged_qty || 0, 10),
       status: true,
     };
 
-    const response = await fetch(PRODUCTS_API_URL, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(apiBody),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || `API error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
+    const result = await api.post('/products/', apiBody);
     const createdItem = result.data || result;
     return normalizeProduct({
       ...createdItem,
       warehouse: productPayload.warehouse || 'Delhi Warehouse',
-      available_quantity: productPayload.availableQuantity ?? 25,
-      reserved_quantity: productPayload.reservedQuantity ?? 4,
-      damaged_quantity: productPayload.damagedQuantity ?? 1,
+      available_qty: productPayload.availableQuantity ?? 0,
+      reserved_qty: productPayload.reservedQuantity ?? 0,
+      damaged_qty: productPayload.damagedQuantity ?? 0,
     });
   } catch (error) {
     console.error('Failed to create product via API:', error);
@@ -107,33 +112,27 @@ export const createProduct = async (productPayload) => {
 
 /**
  * Update an existing product via the live API.
+ * PATCH /api/v1/products/{id}/
  */
 export const updateProduct = async (id, productPayload) => {
   try {
-    const url = `${PRODUCTS_API_URL.replace(/\/$/, '')}/${id}/`;
-    const apiBody = {
-      name: productPayload.productName || productPayload.name,
-      sku: productPayload.sku,
-      category_id: 1,
-      reorder_level: parseInt(productPayload.reorderLevel || productPayload.reorder_level || 10, 10),
-      status: true,
-    };
-
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(apiBody),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || `API error! status: ${response.status}`);
+    const apiBody = {};
+    
+    // Only send fields that were provided
+    if (productPayload.productName || productPayload.name) {
+      apiBody.name = productPayload.productName || productPayload.name;
+    }
+    if (productPayload.categoryId || productPayload.category_id) {
+      apiBody.category_id = productPayload.categoryId || productPayload.category_id;
+    }
+    if (productPayload.reorderLevel || productPayload.reorder_level) {
+      apiBody.reorder_level = parseInt(productPayload.reorderLevel || productPayload.reorder_level, 10);
+    }
+    if (productPayload.status !== undefined) {
+      apiBody.status = productPayload.status;
     }
 
-    const result = await response.json();
+    const result = await api.patch(`/products/${id}/`, apiBody);
     return normalizeProduct(result.data || result);
   } catch (error) {
     console.error(`Failed to update product #${id} via API:`, error);
@@ -142,24 +141,23 @@ export const updateProduct = async (id, productPayload) => {
 };
 
 /**
- * Delete a product via the live API.
+ * Deactivate (soft-delete) a product via the live API.
+ * PATCH /api/v1/products/{id}/deactivate/
  */
-export const deleteProduct = async (id) => {
+export const deactivateProduct = async (id) => {
   try {
-    const url = `${PRODUCTS_API_URL.replace(/\/$/, '')}/${id}/`;
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API delete error! status: ${response.status}`);
-    }
-    return true;
+    const result = await api.patch(`/products/${id}/deactivate/`);
+    return result;
   } catch (error) {
-    console.error(`Failed to delete product #${id} via API:`, error);
+    console.error(`Failed to deactivate product #${id} via API:`, error);
     throw error;
   }
+};
+
+/**
+ * Delete a product — uses deactivate endpoint (soft-delete).
+ * Kept for backward compatibility with existing code.
+ */
+export const deleteProduct = async (id) => {
+  return deactivateProduct(id);
 };
