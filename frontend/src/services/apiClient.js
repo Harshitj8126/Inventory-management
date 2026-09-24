@@ -16,7 +16,9 @@ const API_BASE_URL =
 /**
  * Get the stored JWT access token.
  */
-const getToken = () => sessionStorage.getItem('auth_token');
+const getToken = () => {
+  return localStorage.getItem('accessToken') || sessionStorage.getItem('auth_token');
+};
 
 /**
  * Build headers for API requests.
@@ -47,7 +49,7 @@ const buildHeaders = (extraHeaders = {}) => {
  * @returns {Promise<object>} — parsed JSON response
  */
 const request = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   const config = {
     method: options.method || 'GET',

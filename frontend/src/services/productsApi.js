@@ -1,24 +1,13 @@
 /* ============================================================
-   productsApi.js — Live Products API Service
-   Codlix Technologies · Inventory & Vendor Management System
-   ============================================================
-   Integrates with:
-     GET   /api/v1/products/              — List products
-     POST  /api/v1/products/              — Create product
-     GET   /api/v1/products/{id}/         — Get product detail
-     PATCH /api/v1/products/{id}/         — Edit product
-     PATCH /api/v1/products/{id}/deactivate/ — Soft-delete product
+   productsApi.js — Supabase Products API Service
    ============================================================ */
 
-import api from './apiClient';
+import { supabase } from './supabaseClient';
 
-/**
- * Helper function to map API payload fields to internal UI state schema
- */
 export const normalizeProduct = (item) => {
-  const avail = item.available_qty ?? item.available_quantity ?? item.quantity ?? 25;
-  const res = item.reserved_qty ?? item.reserved_quantity ?? 4;
-  const dmg = item.damaged_qty ?? item.damaged_quantity ?? 1;
+  const avail = item.available_qty ?? item.available_quantity ?? item.quantity ?? 0;
+  const res = item.reserved_qty ?? item.reserved_quantity ?? 0;
+  const dmg = item.damaged_qty ?? item.damaged_quantity ?? 0;
   const total = item.total_qty ?? item.total_quantity ?? (avail + res + dmg);
   const reorder = item.reorder_level ?? 10;
 
@@ -26,8 +15,8 @@ export const normalizeProduct = (item) => {
     id: item.id,
     productName: item.name || item.productName || 'Unnamed Product',
     sku: item.sku || `SKU-${item.id}`,
-    category: item.category_name || item.category || 'Electronics',
-    warehouse: item.warehouse_name || item.warehouse || 'Delhi Warehouse',
+    category: item.categories?.name || item.category_name || item.category || 'Uncategorized',
+    warehouse: item.warehouses?.name || item.warehouse_name || item.warehouse || 'Main Warehouse',
     warehouseId: item.warehouse_id || item.warehouseId || null,
     totalQuantity: total,
     availableQuantity: avail,
@@ -40,47 +29,46 @@ export const normalizeProduct = (item) => {
   };
 };
 
-/**
- * Fetch products from the live backend API.
- * Returns array of normalized product items.
- */
 export const fetchProducts = async () => {
   try {
-    const result = await api.get('/products/');
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories (name),
+        warehouses (name)
+      `)
+      .order('created_at', { ascending: false });
 
-    if (result && result.success && Array.isArray(result.data)) {
-      return result.data.map((item) => normalizeProduct(item));
-    }
-    // Some API responses may have data directly as array
-    if (Array.isArray(result.data)) {
-      return result.data.map((item) => normalizeProduct(item));
-    }
-    return [];
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
   } catch (error) {
-    console.error('Failed to fetch live products from API:', error);
+    console.error('Failed to fetch live products from Supabase:', error);
     throw error;
   }
 };
 
-/**
- * Get a single product by ID.
- * GET /api/v1/products/{id}/
- */
 export const fetchProductById = async (id) => {
   try {
-    const result = await api.get(`/products/${id}/`);
-    const item = result.data || result;
-    return normalizeProduct(item);
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories (name),
+        warehouses (name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return normalizeProduct(data);
   } catch (error) {
     console.error(`Failed to fetch product #${id}:`, error);
     throw error;
   }
 };
 
-/**
- * Create a new product via the live API.
- * POST /api/v1/products/
- */
 export const createProduct = async (productPayload) => {
   try {
     const apiBody = {
@@ -95,30 +83,29 @@ export const createProduct = async (productPayload) => {
       status: true,
     };
 
-    const result = await api.post('/products/', apiBody);
-    const createdItem = result.data || result;
-    return normalizeProduct({
-      ...createdItem,
-      warehouse: productPayload.warehouse || 'Delhi Warehouse',
-      available_qty: productPayload.availableQuantity ?? 0,
-      reserved_qty: productPayload.reservedQuantity ?? 0,
-      damaged_qty: productPayload.damagedQuantity ?? 0,
-    });
+    const { data, error } = await supabase
+      .from('products')
+      .insert([apiBody])
+      .select(`
+        *,
+        categories (name),
+        warehouses (name)
+      `)
+      .single();
+
+    if (error) throw error;
+    
+    return normalizeProduct(data);
   } catch (error) {
-    console.error('Failed to create product via API:', error);
+    console.error('Failed to create product via Supabase:', error);
     throw error;
   }
 };
 
-/**
- * Update an existing product via the live API.
- * PATCH /api/v1/products/{id}/
- */
 export const updateProduct = async (id, productPayload) => {
   try {
     const apiBody = {};
     
-    // Only send fields that were provided
     if (productPayload.productName || productPayload.name) {
       apiBody.name = productPayload.productName || productPayload.name;
     }
@@ -132,32 +119,42 @@ export const updateProduct = async (id, productPayload) => {
       apiBody.status = productPayload.status;
     }
 
-    const result = await api.patch(`/products/${id}/`, apiBody);
-    return normalizeProduct(result.data || result);
+    const { data, error } = await supabase
+      .from('products')
+      .update(apiBody)
+      .eq('id', id)
+      .select(`
+        *,
+        categories (name),
+        warehouses (name)
+      `)
+      .single();
+
+    if (error) throw error;
+    return normalizeProduct(data);
   } catch (error) {
-    console.error(`Failed to update product #${id} via API:`, error);
+    console.error(`Failed to update product #${id} via Supabase:`, error);
     throw error;
   }
 };
 
-/**
- * Deactivate (soft-delete) a product via the live API.
- * PATCH /api/v1/products/{id}/deactivate/
- */
 export const deactivateProduct = async (id) => {
   try {
-    const result = await api.patch(`/products/${id}/deactivate/`);
-    return result;
+    const { data, error } = await supabase
+      .from('products')
+      .update({ status: false })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error(`Failed to deactivate product #${id} via API:`, error);
+    console.error(`Failed to deactivate product #${id} via Supabase:`, error);
     throw error;
   }
 };
 
-/**
- * Delete a product — uses deactivate endpoint (soft-delete).
- * Kept for backward compatibility with existing code.
- */
 export const deleteProduct = async (id) => {
   return deactivateProduct(id);
 };

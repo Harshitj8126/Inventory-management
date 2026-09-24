@@ -3,9 +3,9 @@
    Codlix Technologies · Inventory & Vendor Management System
    ============================================================ */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { monthlyStockData, categorySpendData, topMovingItems } from '../../services/mockData';
-import { inventoryData, getStockStatus } from '../../services/inventoryService';
+import { getInventory, getStockStatus } from '../../services/inventoryService';
 import Modal from '../../components/modals/Modal';
 import KpiCard from '../../components/common/KpiCard';
 import './Reports.css';
@@ -39,13 +39,26 @@ const Reports = () => {
   const [exportFormat, setExportFormat] = useState('CSV');
   const [exportRange, setExportRange] = useState('Last 30 Days');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [lowStockCount, setLowStockCount] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const inventory = await getInventory();
+        const lowStock = inventory.filter(i => getStockStatus(i) === 'Low Stock').length;
+        setLowStockCount(lowStock);
+      } catch (e) {
+        console.error('Failed to fetch stats', e);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const stats = (() => {
     const totalMoves = monthlyStockData.reduce((s, d) => s + d.stockIn + d.stockOut, 0);
     const totalIn    = monthlyStockData.reduce((s, d) => s + d.stockIn, 0);
     const totalOut   = monthlyStockData.reduce((s, d) => s + d.stockOut, 0);
-    const lowStock   = inventoryData.filter(i => getStockStatus(i) === 'Low Stock').length;
-    return { totalMoves, totalIn, totalOut, lowStock };
+    return { totalMoves, totalIn, totalOut, lowStock: lowStockCount };
   })();
 
   const handleExportDownload = () => {

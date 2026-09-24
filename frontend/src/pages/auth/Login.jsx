@@ -193,7 +193,7 @@ const Login = () => {
       } else {
         const res = await loginUser(email, password);
         login(res.user);
-        navigate('/dashboard');
+        navigate('/inventory');
       }
     } catch (err) {
 
